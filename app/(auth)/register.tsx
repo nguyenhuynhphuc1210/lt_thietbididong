@@ -1,17 +1,38 @@
 import { register } from "@/hooks/useAuth";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { router } from "expo-router";
 import { useState } from "react";
-import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Controller, useForm } from "react-hook-form";
+import { Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import Toast from "react-native-toast-message";
+import { z } from "zod";
+
+
+// 1. Định nghĩa Schema validate (Khớp hoàn toàn với Java DTO)
+const registerSchema = z.object({
+  username: z.string().trim().min(3, "Tên đăng nhập từ 3-20 ký tự").max(20, "Tên đăng nhập quá dài"),
+  password: z.string().min(6, "Mật khẩu phải có ít nhất 6 ký tự"),
+  email: z.string().trim().email("Email không đúng định dạng"),
+  fullName: z.string().trim().min(1, "Vui lòng nhập họ và tên"),
+  phone: z.string().trim().regex(/^(0|84)[3|5|7|8|9][0-9]{8}$/, "Số điện thoại Việt Nam không hợp lệ"),
+});
+
+type RegisterFormData = z.infer<typeof registerSchema>;
 
 export default function RegisterScreen() {
-  const [form, setForm] = useState({
-    username: "",
-    password: "",
-    email: "",
-    fullName: "",
-    phone: ""
-  });
   const [loading, setLoading] = useState(false);
+
+  // 2. Khởi tạo Hook Form
+  const { control, handleSubmit, formState: { errors } } = useForm<RegisterFormData>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: {
+      username: "",
+      password: "",
+      email: "",
+      fullName: "",
+      phone: ""
+    }
+  });
 
   const fieldLabels = {
     username: "Tên đăng nhập",
@@ -29,84 +50,106 @@ export default function RegisterScreen() {
     phone: "0123456789"
   };
 
-  const handleRegister = async () => {
-    // Validation
-    if (!form.username || !form.password || !form.email || !form.fullName || !form.phone) {
-      Alert.alert("Lỗi", "Vui lòng điền đầy đủ thông tin");
-      return;
-    }
+  // 3. Hàm xử lý khi bấm Đăng ký
+const onSubmit = async (data: RegisterFormData) => {
+  // 1. Tắt bàn phím ngay lập tức
+  Keyboard.dismiss();
+  setLoading(true);
 
-    try {
-      setLoading(true);
-      await register(form);
-      Alert.alert("Thành công", "Đăng ký thành công", [
-        { text: "OK", onPress: () => router.replace("/(auth)/login") }
-      ]);
-    } catch (err: any) {
-      Alert.alert("Lỗi", err.response?.data || "Đăng ký thất bại");
-    } finally {
+  try {
+    console.log("1. Bắt đầu gọi API Register...");
+    const result = await register(data);
+    console.log("2. API thành công:", result);
+
+    // 2. Hiện thông báo thành công bằng Toast
+    Toast.show({
+      type: "success",
+      text1: "Đăng ký thành công!",
+      text2: "Bây giờ bạn có thể đăng nhập vào hệ thống.",
+      visibilityTime: 2000, // Hiển thị trong 2 giây
+    });
+
+    // 3. Tắt loading và chuyển trang sau một khoảng nghỉ ngắn
+    // để người dùng kịp nhìn thấy Toast thành công
+    setTimeout(() => {
       setLoading(false);
-    }
-  };
+      router.replace("/(auth)/login");
+    }, 1500);
 
-  return (
+  } catch (err: any) {
+    setLoading(false);
+    console.log("Lỗi xảy ra:", err);
+    
+    const errorMsg = err.response?.data?.message || "Đăng ký thất bại";
+    
+    // Hiện lỗi bằng Toast đỏ
+    Toast.show({
+      type: "error",
+      text1: "Lỗi đăng ký",
+      text2: errorMsg,
+    });
+  }
+};
+
+return (
     <KeyboardAvoidingView 
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={styles.container}
     >
-      <ScrollView 
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={styles.content}>
-          {/* Header */}
           <View style={styles.header}>
             <Text style={styles.title}>Tạo tài khoản</Text>
-            <Text style={styles.subtitle}>Điền thông tin để đăng ký</Text>
+            <Text style={styles.subtitle}>Tham gia hệ thống quản lý Salon</Text>
           </View>
 
-          {/* Form */}
           <View style={styles.form}>
-            {Object.keys(form).map((key) => (
+            {(Object.keys(fieldLabels) as (keyof RegisterFormData)[]).map((key) => (
               <View key={key} style={styles.inputContainer}>
-                <Text style={styles.label}>{fieldLabels[key as keyof typeof fieldLabels]}</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder={fieldPlaceholders[key as keyof typeof fieldPlaceholders]}
-                  placeholderTextColor="#999"
-                  value={(form as any)[key]}
-                  secureTextEntry={key === "password"}
-                  onChangeText={(v) =>
-                    setForm((prev) => ({ ...prev, [key]: v }))
-                  }
-                  autoCapitalize={key === "email" ? "none" : "sentences"}
-                  keyboardType={
-                    key === "email" ? "email-address" : 
-                    key === "phone" ? "phone-pad" : 
-                    "default"
-                  }
-                  editable={!loading}
+                <Text style={styles.label}>{fieldLabels[key]}</Text>
+                
+                <Controller
+                  control={control}
+                  name={key}
+                  render={({ field: { onChange, onBlur, value } }) => (
+                    <TextInput
+                      style={[styles.input, errors[key] && styles.inputError]}
+                      placeholder={fieldPlaceholders[key]}
+                      placeholderTextColor="#999"
+                      onBlur={onBlur}
+                      onChangeText={onChange}
+                      value={value}
+                      secureTextEntry={key === "password"}
+                      autoCapitalize={key === "email" || key === "username" ? "none" : "sentences"}
+                      keyboardType={
+                        key === "email" ? "email-address" : 
+                        key === "phone" ? "phone-pad" : "default"
+                      }
+                      editable={!loading}
+                    />
+                  )}
                 />
+                
+                {/* Hiển thị thông báo lỗi ngay dưới ô nhập */}
+                {errors[key] && (
+                  <Text style={styles.errorText}>{errors[key]?.message}</Text>
+                )}
               </View>
             ))}
 
             <TouchableOpacity 
               style={[styles.registerButton, loading && styles.registerButtonDisabled]}
-              onPress={handleRegister}
+              onPress={handleSubmit(onSubmit)}
               disabled={loading}
             >
               <Text style={styles.registerButtonText}>
-                {loading ? "Đang đăng ký..." : "Đăng ký"}
+                {loading ? "Đang xử lý..." : "Đăng ký"}
               </Text>
             </TouchableOpacity>
 
-            {/* Back to Login */}
             <View style={styles.loginContainer}>
               <Text style={styles.loginText}>Đã có tài khoản? </Text>
-              <TouchableOpacity 
-                onPress={() => router.back()}
-                disabled={loading}
-              >
+              <TouchableOpacity onPress={() => router.back()} disabled={loading}>
                 <Text style={styles.loginLink}>Đăng nhập ngay</Text>
               </TouchableOpacity>
             </View>
@@ -201,5 +244,16 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: "#007AFF",
     fontWeight: "600",
+  },
+  inputError: {
+    borderColor: "#FF3B30",
+    borderWidth: 1.5,
+  },
+  errorText: {
+    color: "#FF3B30",
+    fontSize: 12,
+    marginTop: 4,
+    marginLeft: 4,
+    fontWeight: "500",
   },
 });

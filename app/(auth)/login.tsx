@@ -1,25 +1,59 @@
 import { login } from "@/hooks/useAuth";
 import { router } from "expo-router";
 import { useState } from "react";
-import { Alert, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Keyboard, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+// --- Thêm các import này ---
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Controller, useForm } from "react-hook-form";
+import Toast from "react-native-toast-message";
+import { z } from "zod";
+
+// Định nghĩa Schema validate (Giống @NotBlank bên Java)
+const loginSchema = z.object({
+  username: z.string().trim().min(1, "Tên đăng nhập không được để trống"),
+  password: z.string().min(1, "Mật khẩu không được để trống"),
+});
+
+type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function LoginScreen() {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = async () => {
-    if (!username || !password) {
-      Alert.alert("Lỗi", "Vui lòng nhập đầy đủ thông tin");
-      return;
-    }
+  // Khởi tạo hook form
+  const { control, handleSubmit, formState: { errors } } = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: { username: "", password: "" }
+  });
 
+const onSubmit = async (data: LoginFormData) => {
     try {
       setLoading(true);
-      await login(username, password);
+      Keyboard.dismiss();
+
+      await login(data.username, data.password);
+
+      // 1. Thông báo thành công bằng Toast
+      Toast.show({
+        type: "success",
+        text1: "Đăng nhập thành công",
+        text2: "Chào mừng bạn quay trở lại! 👋",
+        visibilityTime: 2000,
+      });
+
+      // Chuyển trang
       router.replace("/(tabs)/home");
     } catch (err: any) {
-      Alert.alert("Lỗi", "Sai tài khoản hoặc mật khẩu");
+      console.log("Chi tiết lỗi:", err.response?.data);
+      
+      const errorMsg = err.response?.data?.message || "Sai tài khoản hoặc mật khẩu";
+
+      // 2. Thông báo lỗi bằng Toast
+      Toast.show({
+        type: "error",
+        text1: "Lỗi đăng nhập",
+        text2: errorMsg,
+        position: "top", // Có thể chọn 'top' hoặc 'bottom'
+      });
     } finally {
       setLoading(false);
     }
@@ -31,43 +65,57 @@ export default function LoginScreen() {
       style={styles.container}
     >
       <View style={styles.content}>
-        {/* Header */}
         <View style={styles.header}>
           <Text style={styles.title}>Chào mừng trở lại</Text>
           <Text style={styles.subtitle}>Đăng nhập để tiếp tục</Text>
         </View>
 
-        {/* Form */}
         <View style={styles.form}>
+          {/* Tên đăng nhập */}
           <View style={styles.inputContainer}>
             <Text style={styles.label}>Tên đăng nhập</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Nhập tên đăng nhập"
-              placeholderTextColor="#999"
-              value={username}
-              onChangeText={setUsername}
-              autoCapitalize="none"
-              editable={!loading}
+            <Controller
+              control={control}
+              name="username"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <TextInput
+                  style={[styles.input, errors.username && styles.inputError]}
+                  placeholder="Nhập tên đăng nhập"
+                  onBlur={onBlur}
+                  onChangeText={onChange}
+                  value={value}
+                  autoCapitalize="none"
+                  editable={!loading}
+                />
+              )}
             />
+            {errors.username && <Text style={styles.errorText}>{errors.username.message}</Text>}
           </View>
 
+          {/* Mật khẩu */}
           <View style={styles.inputContainer}>
             <Text style={styles.label}>Mật khẩu</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Nhập mật khẩu"
-              placeholderTextColor="#999"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              editable={!loading}
+            <Controller
+              control={control}
+              name="password"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <TextInput
+                  style={[styles.input, errors.password && styles.inputError]}
+                  placeholder="Nhập mật khẩu"
+                  secureTextEntry
+                  onBlur={onBlur}
+                  onChangeText={onChange}
+                  value={value}
+                  editable={!loading}
+                />
+              )}
             />
+            {errors.password && <Text style={styles.errorText}>{errors.password.message}</Text>}
           </View>
 
           <TouchableOpacity 
             style={[styles.loginButton, loading && styles.loginButtonDisabled]}
-            onPress={handleLogin}
+            onPress={handleSubmit(onSubmit)} // Dùng handleSubmit của hook form
             disabled={loading}
           >
             <Text style={styles.loginButtonText}>
@@ -187,5 +235,14 @@ const styles = StyleSheet.create({
     color: "#007AFF",
     fontSize: 16,
     fontWeight: "600",
+  },
+  inputError: {
+    borderColor: "#ff4d4f", // Đổi màu viền khi có lỗi
+  },
+  errorText: {
+    color: "#ff4d4f",
+    fontSize: 12,
+    marginTop: 4,
+    marginLeft: 4,
   },
 });
