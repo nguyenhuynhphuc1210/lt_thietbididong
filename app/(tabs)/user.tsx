@@ -4,26 +4,19 @@ import { Ionicons } from "@expo/vector-icons"; // Expo có sẵn thư viện ico
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
-import { Alert, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 export default function UserScreen() {
-    const [fullName, setFullName] = useState<string>("");
+  const [fullName, setFullName] = useState<string>("");
+  const [showConfirm, setShowConfirm] = useState(false);
 
-  const handleLogout = async () => {
-    Alert.alert("Xác nhận", "Bạn có chắc chắn muốn đăng xuất?", [
-      { text: "Hủy", style: "cancel" },
-      {
-        text: "Đăng xuất",
-        style: "destructive",
-        onPress: async () => {
-          await logout();
-          router.replace("/");
-        },
-      },
-    ]);
+  const confirmLogout = async () => {
+    await logout();
+    setShowConfirm(false);
+    router.replace("/");
   };
 
-    useEffect(() => {
+  useEffect(() => {
     const loadUser = async () => {
       const userStr = await AsyncStorage.getItem("user");
       if (userStr) {
@@ -47,10 +40,38 @@ export default function UserScreen() {
           <Text style={styles.menuText}>Cài đặt tài khoản</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.menuItem} onPress={handleLogout}>
+        <TouchableOpacity
+          style={styles.menuItem}
+          onPress={() => setShowConfirm(true)}
+        >
           <Ionicons name="log-out-outline" size={24} color="#FF3B30" />
           <Text style={[styles.menuText, { color: "#FF3B30" }]}>Đăng xuất</Text>
         </TouchableOpacity>
+
+        <Modal transparent visible={showConfirm} animationType="fade">
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalBox}>
+              <Text style={{ fontSize: 16, marginBottom: 20 }}>
+                Bạn có chắc chắn muốn đăng xuất?
+              </Text>
+
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                }}
+              >
+                <TouchableOpacity onPress={() => setShowConfirm(false)}>
+                  <Text>Hủy</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity onPress={confirmLogout}>
+                  <Text style={{ color: "red" }}>Đăng xuất</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
       </View>
     </View>
   );
@@ -58,7 +79,11 @@ export default function UserScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#f8f9fa" },
-  header: { alignItems: "center", paddingVertical: 40, backgroundColor: "#fff" },
+  header: {
+    alignItems: "center",
+    paddingVertical: 40,
+    backgroundColor: "#fff",
+  },
   username: { fontSize: 20, fontWeight: "600", marginTop: 10 },
   menu: { marginTop: 20, backgroundColor: "#fff" },
   menuItem: {
@@ -69,4 +94,18 @@ const styles = StyleSheet.create({
     borderBottomColor: "#eee",
   },
   menuText: { fontSize: 16, marginLeft: 12, color: "#333" },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.4)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  modalBox: {
+    width: "80%",
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 20,
+    elevation: 5,
+  },
 });
