@@ -3,18 +3,40 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { router } from "expo-router";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
-import { Keyboard, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import {
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import Toast from "react-native-toast-message";
 import { z } from "zod";
 
-
-// 1. Định nghĩa Schema validate (Khớp hoàn toàn với Java DTO)
+// ================= SCHEMA VALIDATION =================
 const registerSchema = z.object({
-  username: z.string().trim().min(3, "Tên đăng nhập từ 3-20 ký tự").max(20, "Tên đăng nhập quá dài"),
-  password: z.string().min(6, "Mật khẩu phải có ít nhất 6 ký tự"),
-  email: z.string().trim().email("Email không đúng định dạng"),
-  fullName: z.string().trim().min(1, "Vui lòng nhập họ và tên"),
-  phone: z.string().trim().regex(/^(0|84)[3|5|7|8|9][0-9]{8}$/, "Số điện thoại Việt Nam không hợp lệ"),
+  email: z
+    .string()
+    .trim()
+    .email("Email không đúng định dạng"),
+  password: z
+    .string()
+    .min(6, "Mật khẩu phải có ít nhất 6 ký tự"),
+  fullName: z
+    .string()
+    .trim()
+    .min(1, "Vui lòng nhập họ và tên"),
+  phone: z
+    .string()
+    .trim()
+    .regex(
+      /^(0|84)[3|5|7|8|9][0-9]{8}$/,
+      "Số điện thoại Việt Nam không hợp lệ"
+    ),
 });
 
 type RegisterFormData = z.infer<typeof registerSchema>;
@@ -22,122 +44,170 @@ type RegisterFormData = z.infer<typeof registerSchema>;
 export default function RegisterScreen() {
   const [loading, setLoading] = useState(false);
 
-  // 2. Khởi tạo Hook Form
-  const { control, handleSubmit, formState: { errors } } = useForm<RegisterFormData>({
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
-      username: "",
-      password: "",
       email: "",
+      password: "",
       fullName: "",
-      phone: ""
-    }
+      phone: "",
+    },
   });
 
-  const fieldLabels = {
-    username: "Tên đăng nhập",
-    password: "Mật khẩu",
-    email: "Email",
-    fullName: "Họ và tên",
-    phone: "Số điện thoại"
-  };
+  // ================= SUBMIT =================
+  const onSubmit = async (data: RegisterFormData) => {
+    Keyboard.dismiss();
+    setLoading(true);
 
-  const fieldPlaceholders = {
-    username: "Nhập tên đăng nhập",
-    password: "Nhập mật khẩu",
-    email: "example@email.com",
-    fullName: "Nhập họ và tên đầy đủ",
-    phone: "0123456789"
-  };
+    try {
+      await register(data);
 
-  // 3. Hàm xử lý khi bấm Đăng ký
-const onSubmit = async (data: RegisterFormData) => {
-  // 1. Tắt bàn phím ngay lập tức
-  Keyboard.dismiss();
-  setLoading(true);
+      Toast.show({
+        type: "success",
+        text1: "Đăng ký thành công 🎉",
+        text2: "Bạn có thể đăng nhập ngay bây giờ",
+        visibilityTime: 2000,
+      });
 
-  try {
-    console.log("1. Bắt đầu gọi API Register...");
-    const result = await register(data);
-    console.log("2. API thành công:", result);
-
-    // 2. Hiện thông báo thành công bằng Toast
-    Toast.show({
-      type: "success",
-      text1: "Đăng ký thành công!",
-      text2: "Bây giờ bạn có thể đăng nhập vào hệ thống.",
-      visibilityTime: 2000, // Hiển thị trong 2 giây
-    });
-
-    // 3. Tắt loading và chuyển trang sau một khoảng nghỉ ngắn
-    // để người dùng kịp nhìn thấy Toast thành công
-    setTimeout(() => {
+      setTimeout(() => {
+        setLoading(false);
+        router.replace("/(auth)/login");
+      }, 1500);
+    } catch (err: any) {
       setLoading(false);
-      router.replace("/(auth)/login");
-    }, 1500);
 
-  } catch (err: any) {
-    setLoading(false);
-    console.log("Lỗi xảy ra:", err);
-    
-    const errorMsg = err.response?.data?.message || "Đăng ký thất bại";
-    
-    // Hiện lỗi bằng Toast đỏ
-    Toast.show({
-      type: "error",
-      text1: "Lỗi đăng ký",
-      text2: errorMsg,
-    });
-  }
-};
+      const errorMsg =
+        err.response?.data?.message || "Đăng ký thất bại";
 
-return (
-    <KeyboardAvoidingView 
+      Toast.show({
+        type: "error",
+        text1: "Lỗi đăng ký",
+        text2: errorMsg,
+      });
+    }
+  };
+
+  return (
+    <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={styles.container}
     >
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.content}>
           <View style={styles.header}>
             <Text style={styles.title}>Tạo tài khoản</Text>
-            <Text style={styles.subtitle}>Tham gia hệ thống quản lý Salon</Text>
+            <Text style={styles.subtitle}>
+              Đăng ký để bắt đầu sử dụng hệ thống
+            </Text>
           </View>
 
           <View style={styles.form}>
-            {(Object.keys(fieldLabels) as (keyof RegisterFormData)[]).map((key) => (
-              <View key={key} style={styles.inputContainer}>
-                <Text style={styles.label}>{fieldLabels[key]}</Text>
-                
-                <Controller
-                  control={control}
-                  name={key}
-                  render={({ field: { onChange, onBlur, value } }) => (
-                    <TextInput
-                      style={[styles.input, errors[key] && styles.inputError]}
-                      placeholder={fieldPlaceholders[key]}
-                      placeholderTextColor="#999"
-                      onBlur={onBlur}
-                      onChangeText={onChange}
-                      value={value}
-                      secureTextEntry={key === "password"}
-                      autoCapitalize={key === "email" || key === "username" ? "none" : "sentences"}
-                      keyboardType={
-                        key === "email" ? "email-address" : 
-                        key === "phone" ? "phone-pad" : "default"
-                      }
-                      editable={!loading}
-                    />
-                  )}
-                />
-                
-                {/* Hiển thị thông báo lỗi ngay dưới ô nhập */}
-                {errors[key] && (
-                  <Text style={styles.errorText}>{errors[key]?.message}</Text>
+            {/* EMAIL */}
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Email</Text>
+              <Controller
+                control={control}
+                name="email"
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <TextInput
+                    style={[styles.input, errors.email && styles.inputError]}
+                    placeholder="example@email.com"
+                    placeholderTextColor="#999"
+                    onBlur={onBlur}
+                    onChangeText={onChange}
+                    value={value}
+                    autoCapitalize="none"
+                    keyboardType="email-address"
+                    editable={!loading}
+                  />
                 )}
-              </View>
-            ))}
+              />
+              {errors.email && (
+                <Text style={styles.errorText}>{errors.email.message}</Text>
+              )}
+            </View>
 
-            <TouchableOpacity 
+            {/* PASSWORD */}
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Mật khẩu</Text>
+              <Controller
+                control={control}
+                name="password"
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <TextInput
+                    style={[styles.input, errors.password && styles.inputError]}
+                    placeholder="Nhập mật khẩu"
+                    placeholderTextColor="#999"
+                    secureTextEntry
+                    onBlur={onBlur}
+                    onChangeText={onChange}
+                    value={value}
+                    editable={!loading}
+                  />
+                )}
+              />
+              {errors.password && (
+                <Text style={styles.errorText}>{errors.password.message}</Text>
+              )}
+            </View>
+
+            {/* FULL NAME */}
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Họ và tên</Text>
+              <Controller
+                control={control}
+                name="fullName"
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <TextInput
+                    style={[styles.input, errors.fullName && styles.inputError]}
+                    placeholder="Nhập họ và tên đầy đủ"
+                    placeholderTextColor="#999"
+                    onBlur={onBlur}
+                    onChangeText={onChange}
+                    value={value}
+                    editable={!loading}
+                  />
+                )}
+              />
+              {errors.fullName && (
+                <Text style={styles.errorText}>
+                  {errors.fullName.message}
+                </Text>
+              )}
+            </View>
+
+            {/* PHONE */}
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Số điện thoại</Text>
+              <Controller
+                control={control}
+                name="phone"
+                render={({ field: { onChange, onBlur, value } }) => (
+                  <TextInput
+                    style={[styles.input, errors.phone && styles.inputError]}
+                    placeholder="0123456789"
+                    placeholderTextColor="#999"
+                    keyboardType="phone-pad"
+                    onBlur={onBlur}
+                    onChangeText={onChange}
+                    value={value}
+                    editable={!loading}
+                  />
+                )}
+              />
+              {errors.phone && (
+                <Text style={styles.errorText}>{errors.phone.message}</Text>
+              )}
+            </View>
+
+            <TouchableOpacity
               style={[styles.registerButton, loading && styles.registerButtonDisabled]}
               onPress={handleSubmit(onSubmit)}
               disabled={loading}
@@ -149,8 +219,11 @@ return (
 
             <View style={styles.loginContainer}>
               <Text style={styles.loginText}>Đã có tài khoản? </Text>
-              <TouchableOpacity onPress={() => router.back()} disabled={loading}>
-                <Text style={styles.loginLink}>Đăng nhập ngay</Text>
+              <TouchableOpacity
+                onPress={() => router.replace("/(auth)/login")}
+                disabled={loading}
+              >
+                <Text style={styles.loginLink}>Đăng nhập</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -160,6 +233,7 @@ return (
   );
 }
 
+// ================= STYLES =================
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -215,15 +289,10 @@ const styles = StyleSheet.create({
     padding: 16,
     alignItems: "center",
     marginTop: 16,
-    shadowColor: "#007AFF",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
     elevation: 4,
   },
   registerButtonDisabled: {
     backgroundColor: "#99c7ff",
-    shadowOpacity: 0,
   },
   registerButtonText: {
     color: "#fff",
@@ -233,7 +302,6 @@ const styles = StyleSheet.create({
   loginContainer: {
     flexDirection: "row",
     justifyContent: "center",
-    alignItems: "center",
     marginTop: 24,
   },
   loginText: {

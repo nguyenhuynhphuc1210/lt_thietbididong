@@ -1,9 +1,10 @@
 import api from "@/constants/api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-export const login = async (username: string, password: string) => {
+export const login = async (email: string, password: string) => {
   try {
-    const res = await api.post("/auth/login", { username, password });
+    const res = await api.post("/auth/login", { email, password });
+    console.log("Dữ liệu Login trả về:", res.data);
     await AsyncStorage.setItem("user", JSON.stringify(res.data));
     return res.data;
   } catch (err) {
@@ -12,9 +13,8 @@ export const login = async (username: string, password: string) => {
 };
 
 export const register = async (data: {
-  username: string;
-  password: string;
   email: string;
+  password: string;
   fullName: string;
   phone: string;
 }) => {
@@ -25,6 +25,12 @@ export const register = async (data: {
     // Rất quan trọng: Phải throw err để RegisterScreen nhận biết được có lỗi
     throw err; 
   }
+};
+
+export const getCurrentUser = async () => {
+  const userStr = await AsyncStorage.getItem("user");
+  if (!userStr) return null;
+  return JSON.parse(userStr);
 };
 
 export const logout = async () => {

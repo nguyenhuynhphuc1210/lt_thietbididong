@@ -1,36 +1,51 @@
-// app/(tabs)/_layout.tsx
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 
 export default function TabLayout() {
   return (
-    <Tabs screenOptions={{ headerShown: false }}>
+    <Tabs
+      screenOptions={{
+        headerShown: false,
+        tabBarActiveTintColor: "#007AFF",
+      }}
+    >
       <Tabs.Screen
         name="home"
         options={{
           title: "Trang chủ",
-          tabBarIcon: ({ color }) => (
-            <Ionicons name="home" size={24} color={color} />
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="home-outline" size={size} color={color} />
           ),
         }}
       />
 
-      {/* TAB DỊCH VỤ */}
       <Tabs.Screen
-        name="services/index"
+        name="wishlist"
         options={{
-          title: "Dịch vụ",
-          tabBarIcon: ({ color }) => (
-            <Ionicons name="cut" size={24} color={color} />
+          title: "Yêu thích",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="heart-outline" size={size} color={color} />
           ),
         }}
       />
 
-      {/* ẨN services/[id] */}
       <Tabs.Screen
-        name="services/[id]"
+        name="cart"
         options={{
-          href: null, // ⭐ QUAN TRỌNG
+          title: "Giỏ hàng",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="cart-outline" size={size} color={color} />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="orders"
+        options={{
+          title: "Đơn hàng",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="receipt-outline" size={size} color={color} />
+          ),
         }}
       />
 
@@ -38,8 +53,8 @@ export default function TabLayout() {
         name="user"
         options={{
           title: "Cá nhân",
-          tabBarIcon: ({ color }) => (
-            <Ionicons name="person" size={24} color={color} />
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="person-outline" size={size} color={color} />
           ),
         }}
       />

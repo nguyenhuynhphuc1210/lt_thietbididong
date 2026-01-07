@@ -1,16 +1,29 @@
 import { login } from "@/hooks/useAuth";
 import { router } from "expo-router";
 import { useState } from "react";
-import { Keyboard, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
-// --- Thêm các import này ---
+import {
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
+} from "react-native";
+
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
 import Toast from "react-native-toast-message";
 import { z } from "zod";
 
-// Định nghĩa Schema validate (Giống @NotBlank bên Java)
+// ================= SCHEMA VALIDATE =================
 const loginSchema = z.object({
-  username: z.string().trim().min(1, "Tên đăng nhập không được để trống"),
+  email: z
+    .string()
+    .trim()
+    .min(1, "Email không được để trống")
+    .email("Email không hợp lệ"),
   password: z.string().min(1, "Mật khẩu không được để trống"),
 });
 
@@ -19,20 +32,26 @@ type LoginFormData = z.infer<typeof loginSchema>;
 export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
 
-  // Khởi tạo hook form
-  const { control, handleSubmit, formState: { errors } } = useForm<LoginFormData>({
+  const {
+    control,
+    handleSubmit,
+    formState: { errors }
+  } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { username: "", password: "" }
+    defaultValues: {
+      email: "",
+      password: ""
+    }
   });
 
-const onSubmit = async (data: LoginFormData) => {
+  const onSubmit = async (data: LoginFormData) => {
     try {
       setLoading(true);
       Keyboard.dismiss();
 
-      await login(data.username, data.password);
+      // ✅ GỬI EMAIL + PASSWORD
+      await login(data.email, data.password);
 
-      // 1. Thông báo thành công bằng Toast
       Toast.show({
         type: "success",
         text1: "Đăng nhập thành công",
@@ -40,19 +59,18 @@ const onSubmit = async (data: LoginFormData) => {
         visibilityTime: 2000,
       });
 
-      // Chuyển trang
       router.replace("/(tabs)/home");
     } catch (err: any) {
       console.log("Chi tiết lỗi:", err.response?.data);
-      
-      const errorMsg = err.response?.data?.message || "Sai tài khoản hoặc mật khẩu";
 
-      // 2. Thông báo lỗi bằng Toast
+      const errorMsg =
+        err.response?.data?.message || "Email hoặc mật khẩu không đúng";
+
       Toast.show({
         type: "error",
         text1: "Lỗi đăng nhập",
         text2: errorMsg,
-        position: "top", // Có thể chọn 'top' hoặc 'bottom'
+        position: "top",
       });
     } finally {
       setLoading(false);
@@ -60,7 +78,7 @@ const onSubmit = async (data: LoginFormData) => {
   };
 
   return (
-    <KeyboardAvoidingView 
+    <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={styles.container}
     >
@@ -71,28 +89,31 @@ const onSubmit = async (data: LoginFormData) => {
         </View>
 
         <View style={styles.form}>
-          {/* Tên đăng nhập */}
+          {/* EMAIL */}
           <View style={styles.inputContainer}>
-            <Text style={styles.label}>Tên đăng nhập</Text>
+            <Text style={styles.label}>Email</Text>
             <Controller
               control={control}
-              name="username"
+              name="email"
               render={({ field: { onChange, onBlur, value } }) => (
                 <TextInput
-                  style={[styles.input, errors.username && styles.inputError]}
-                  placeholder="Nhập tên đăng nhập"
+                  style={[styles.input, errors.email && styles.inputError]}
+                  placeholder="Nhập email"
                   onBlur={onBlur}
                   onChangeText={onChange}
                   value={value}
                   autoCapitalize="none"
+                  keyboardType="email-address"
                   editable={!loading}
                 />
               )}
             />
-            {errors.username && <Text style={styles.errorText}>{errors.username.message}</Text>}
+            {errors.email && (
+              <Text style={styles.errorText}>{errors.email.message}</Text>
+            )}
           </View>
 
-          {/* Mật khẩu */}
+          {/* PASSWORD */}
           <View style={styles.inputContainer}>
             <Text style={styles.label}>Mật khẩu</Text>
             <Controller
@@ -110,12 +131,14 @@ const onSubmit = async (data: LoginFormData) => {
                 />
               )}
             />
-            {errors.password && <Text style={styles.errorText}>{errors.password.message}</Text>}
+            {errors.password && (
+              <Text style={styles.errorText}>{errors.password.message}</Text>
+            )}
           </View>
 
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.loginButton, loading && styles.loginButtonDisabled]}
-            onPress={handleSubmit(onSubmit)} // Dùng handleSubmit của hook form
+            onPress={handleSubmit(onSubmit)}
             disabled={loading}
           >
             <Text style={styles.loginButtonText}>
@@ -129,7 +152,7 @@ const onSubmit = async (data: LoginFormData) => {
             <View style={styles.dividerLine} />
           </View>
 
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.registerButton}
             onPress={() => router.push("/(auth)/register")}
             disabled={loading}
@@ -141,6 +164,7 @@ const onSubmit = async (data: LoginFormData) => {
     </KeyboardAvoidingView>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {
@@ -237,7 +261,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   inputError: {
-    borderColor: "#ff4d4f", // Đổi màu viền khi có lỗi
+    borderColor: "#ff4d4f",
   },
   errorText: {
     color: "#ff4d4f",
