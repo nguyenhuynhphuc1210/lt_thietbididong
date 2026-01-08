@@ -9,7 +9,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -35,13 +35,13 @@ export default function LoginScreen() {
   const {
     control,
     handleSubmit,
-    formState: { errors }
+    formState: { errors },
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
       email: "",
-      password: ""
-    }
+      password: "",
+    },
   });
 
   const onSubmit = async (data: LoginFormData) => {
@@ -137,6 +137,14 @@ export default function LoginScreen() {
           </View>
 
           <TouchableOpacity
+            style={styles.forgotPassword}
+            onPress={() => router.push("/(auth)/forgot-password")}
+            disabled={loading}
+          >
+            <Text style={styles.forgotPasswordText}>Quên mật khẩu?</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
             style={[styles.loginButton, loading && styles.loginButtonDisabled]}
             onPress={handleSubmit(onSubmit)}
             disabled={loading}
@@ -164,7 +172,6 @@ export default function LoginScreen() {
     </KeyboardAvoidingView>
   );
 }
-
 
 const styles = StyleSheet.create({
   container: {
@@ -268,5 +275,14 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 4,
     marginLeft: 4,
+  },
+  forgotPassword: {
+    alignSelf: "flex-end",
+    marginBottom: 16,
+  },
+  forgotPasswordText: {
+    color: "#007AFF",
+    fontSize: 14,
+    fontWeight: "500",
   },
 });

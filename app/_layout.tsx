@@ -1,3 +1,4 @@
+import { CartProvider } from "@/contexts/CartContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Stack } from "expo-router";
 import { useEffect, useState } from "react";
@@ -7,7 +8,7 @@ export default function RootLayout() {
   const [isAuth, setIsAuth] = useState<boolean | null>(null);
 
   useEffect(() => {
-    AsyncStorage.getItem("user").then(user => {
+    AsyncStorage.getItem("user").then((user) => {
       setIsAuth(!!user);
     });
   }, []);
@@ -15,15 +16,15 @@ export default function RootLayout() {
   if (isAuth === null) return null; // loading
 
   return (
-    <>
-    <Stack screenOptions={{ headerShown: false }}>
-      {isAuth ? (
-        <Stack.Screen name="(tabs)" />
-      ) : (
-        <Stack.Screen name="(auth)" />
-      )}
-    </Stack>
-    <Toast />
-    </>
+    <CartProvider>
+      <Stack screenOptions={{ headerShown: false }}>
+        {isAuth ? (
+          <Stack.Screen name="(tabs)" />
+        ) : (
+          <Stack.Screen name="(auth)" />
+        )}
+      </Stack>
+      <Toast />
+    </CartProvider>
   );
 }

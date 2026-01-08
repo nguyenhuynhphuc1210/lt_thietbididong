@@ -1,4 +1,7 @@
 import AppHeader from "@/components/AppHeader";
+import ProductCard from "@/components/ProductCard";
+import api from "@/constants/api";
+import { useCart } from "@/contexts/CartContext";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
@@ -14,8 +17,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import ProductCard from "../../components/ProductCard";
-import api from "../../constants/api";
+import Toast from "react-native-toast-message";
 
 const { width } = Dimensions.get("window");
 
@@ -49,32 +51,34 @@ const banners = [
 ];
 
 export default function HomeScreen() {
+  const { addItem } = useCart(); // ⭐ realtime cart
+  const [loading, setLoading] = useState(true);
+
   const [categories, setCategories] = useState<Category[]>([]);
   const [brands, setBrands] = useState<Brand[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
 
   const [keyword, setKeyword] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [selectedBrand, setSelectedBrand] = useState<number | null>(null);
 
   useEffect(() => {
-    fetchHomeData();
+    loadHome();
   }, []);
 
-  const fetchHomeData = async () => {
+  const loadHome = async () => {
     try {
-      const [resCat, resBrand, resProd] = await Promise.all([
+      const [c, b, p] = await Promise.all([
         api.get("/categories"),
         api.get("/brands"),
         api.get("/products"),
       ]);
 
-      setCategories(resCat.data);
-      setBrands(resBrand.data);
-      setProducts(resProd.data);
-    } catch (error) {
-      console.error("Lỗi API:", error);
+      setCategories(c.data);
+      setBrands(b.data);
+      setProducts(p.data);
+    } catch (err) {
+      console.log("Home API error:", err);
     } finally {
       setLoading(false);
     }
@@ -83,30 +87,50 @@ export default function HomeScreen() {
   /* ================= FILTER ================= */
   const filteredProducts = products.filter((p) => {
     const matchKeyword = p.name.toLowerCase().includes(keyword.toLowerCase());
-
     const matchCategory =
       !selectedCategory || p.categoryId === selectedCategory;
-
     const matchBrand = !selectedBrand || p.brandId === selectedBrand;
 
     return matchKeyword && matchCategory && matchBrand;
   });
 
+  /* ================= ADD TO CART ================= */
+  const handleAddToCart = async (productId: number) => {
+    try {
+      await addItem(productId, 1);
+
+      Toast.show({
+        type: "success",
+        text1: "Đã thêm vào giỏ hàng",
+        position: "bottom",
+        visibilityTime: 1000,
+      });
+    } catch (e: any) {
+      Toast.show({
+        type: "error",
+        text1: e?.message || "Bạn cần đăng nhập",
+        position: "bottom",
+      });
+    }
+  };
+
+  /* ================= LOADING ================= */
   if (loading) {
     return (
-      <View style={styles.centered}>
+      <View style={styles.center}>
         <ActivityIndicator size="large" color="#007AFF" />
       </View>
     );
   }
 
+  /* ================= UI ================= */
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* ===== HEADER ===== */}
+        {/* HEADER */}
         <AppHeader />
 
-        {/* ===== SEARCH ===== */}
+        {/* SEARCH */}
         <View style={styles.searchBox}>
           <TextInput
             placeholder="Tìm kiếm đồng hồ..."
@@ -116,26 +140,26 @@ export default function HomeScreen() {
           />
         </View>
 
-        {/* ===== BANNER ===== */}
+        {/* BANNER */}
         <FlatList
           data={banners}
           horizontal
           pagingEnabled
           showsHorizontalScrollIndicator={false}
-          keyExtractor={(item) => item.id.toString()}
+          keyExtractor={(i) => i.id.toString()}
           renderItem={({ item }) => (
             <Image source={{ uri: item.image }} style={styles.banner} />
           )}
         />
 
-        {/* ===== CATEGORY ===== */}
+        {/* CATEGORY */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Danh mục</Text>
+          <Text style={styles.title}>Danh mục</Text>
           <FlatList
             horizontal
             data={categories}
             showsHorizontalScrollIndicator={false}
-            keyExtractor={(item) => item.id.toString()}
+            keyExtractor={(i) => i.id.toString()}
             renderItem={({ item }) => (
               <TouchableOpacity
                 onPress={() =>
@@ -146,14 +170,14 @@ export default function HomeScreen() {
               >
                 <View
                   style={[
-                    styles.categoryBadge,
-                    selectedCategory === item.id && styles.activeBadge,
+                    styles.badge,
+                    selectedCategory === item.id && styles.badgeActive,
                   ]}
                 >
                   <Text
                     style={[
-                      styles.categoryText,
-                      selectedCategory === item.id && styles.activeText,
+                      styles.badgeText,
+                      selectedCategory === item.id && styles.badgeTextActive,
                     ]}
                   >
                     {item.name}
@@ -164,14 +188,14 @@ export default function HomeScreen() {
           />
         </View>
 
-        {/* ===== BRAND ===== */}
+        {/* BRAND */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Thương hiệu</Text>
+          <Text style={styles.title}>Thương hiệu</Text>
           <FlatList
             horizontal
             data={brands}
             showsHorizontalScrollIndicator={false}
-            keyExtractor={(item) => item.id.toString()}
+            keyExtractor={(i) => i.id.toString()}
             renderItem={({ item }) => (
               <TouchableOpacity
                 onPress={() =>
@@ -181,40 +205,37 @@ export default function HomeScreen() {
                 <View
                   style={[
                     styles.brandCard,
-                    selectedBrand === item.id && styles.activeBrand,
+                    selectedBrand === item.id && styles.brandActive,
                   ]}
                 >
                   <Image
                     source={{ uri: item.logoUrl }}
                     style={styles.brandLogo}
                   />
-                  <Text style={styles.brandName}>{item.name}</Text>
+                  <Text numberOfLines={1} style={styles.brandName}>
+                    {item.name}
+                  </Text>
                 </View>
               </TouchableOpacity>
             )}
           />
         </View>
 
-        {/* ===== PRODUCT ===== */}
+        {/* PRODUCT */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Sản phẩm</Text>
-          <View style={styles.productGrid}>
-            {filteredProducts.map((item) => (
+          <Text style={styles.title}>Sản phẩm</Text>
+          <View style={styles.grid}>
+            {filteredProducts.map((p) => (
               <ProductCard
-                key={item.id}
-                id={item.id}
-                name={item.name}
-                brandName={item.brandName}
-                price={item.price}
-                imageUrl={item.images[0]?.imageUrl}
-                onPress={(id) =>
-                  router.push({
-                    pathname: "/product/[id]",
-                    params: { id: id.toString() },
-                  })
-                }
-                onAddToCart={(id) => console.log("Add cart", id)}
-                onToggleWishlist={(id) => console.log("Wishlist", id)}
+                key={p.id}
+                id={p.id}
+                name={p.name}
+                brandName={p.brandName}
+                price={p.price}
+                imageUrl={p.images[0]?.imageUrl}
+                onPress={() => router.push(`/product/${p.id}`)}
+                onAddToCart={() => handleAddToCart(p.id)}
+                onToggleWishlist={() => {}}
               />
             ))}
           </View>
@@ -227,11 +248,7 @@ export default function HomeScreen() {
 /* ================= STYLES ================= */
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#f8f9fa" },
-  centered: { flex: 1, justifyContent: "center", alignItems: "center" },
-
-  header: { paddingHorizontal: 16, marginTop: 10 },
-  greeting: { fontSize: 14, color: "#666" },
-  userName: { fontSize: 22, fontWeight: "700", color: "#111" },
+  center: { flex: 1, justifyContent: "center", alignItems: "center" },
 
   searchBox: { margin: 16 },
   searchInput: {
@@ -251,13 +268,9 @@ const styles = StyleSheet.create({
   },
 
   section: { marginTop: 20, paddingHorizontal: 16 },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    marginBottom: 12,
-  },
+  title: { fontSize: 18, fontWeight: "700", marginBottom: 12 },
 
-  categoryBadge: {
+  badge: {
     paddingHorizontal: 16,
     paddingVertical: 8,
     backgroundColor: "#fff",
@@ -266,16 +279,25 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#ddd",
   },
-  categoryText: { color: "#333" },
-  activeBadge: { backgroundColor: "#007AFF", borderColor: "#007AFF" },
-  activeText: { color: "#fff", fontWeight: "600" },
+  badgeActive: { backgroundColor: "#007AFF", borderColor: "#007AFF" },
+  badgeText: { color: "#333" },
+  badgeTextActive: { color: "#fff", fontWeight: "600" },
 
-  brandCard: { alignItems: "center", marginRight: 16 },
-  brandLogo: { width: 60, height: 60, borderRadius: 30 },
-  brandName: { fontSize: 12, marginTop: 4 },
-  activeBrand: { opacity: 0.6 },
+  brandCard: {
+    width: 110,
+    padding: 10,
+    marginRight: 16,
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#eee",
+    alignItems: "center",
+  },
+  brandActive: { borderColor: "#007AFF" },
+  brandLogo: { width: 90, height: 50, resizeMode: "contain" },
+  brandName: { fontSize: 12, marginTop: 6 },
 
-  productGrid: {
+  grid: {
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",

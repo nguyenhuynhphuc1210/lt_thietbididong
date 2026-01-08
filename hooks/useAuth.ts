@@ -4,11 +4,10 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 export const login = async (email: string, password: string) => {
   try {
     const res = await api.post("/auth/login", { email, password });
-    console.log("Dữ liệu Login trả về:", res.data);
     await AsyncStorage.setItem("user", JSON.stringify(res.data));
     return res.data;
   } catch (err) {
-    throw err; // ⚠️ BẮT BUỘC
+    throw err;
   }
 };
 
@@ -20,10 +19,39 @@ export const register = async (data: {
 }) => {
   try {
     const res = await api.post("/auth/register", data);
-    return res.data; // Đảm bảo trả về dữ liệu
+    return res.data;
   } catch (err) {
-    // Rất quan trọng: Phải throw err để RegisterScreen nhận biết được có lỗi
-    throw err; 
+    throw err;
+  }
+};
+
+// Gửi OTP về email
+export const forgotPassword = async (email: string) => {
+  try {
+    const res = await api.post("/auth/forgot-password", { email });
+    return res.data; // { message }
+  } catch (err) {
+    throw err;
+  }
+};
+
+export const verifyOtp = async (data: {
+  email: string;
+  otp: string;
+}) => {
+  const res = await api.post("/auth/verify-otp", data);
+  return res.data;
+};
+
+export const resetPassword = async (data: {
+  email: string;
+  newPassword: string;
+}) => {
+  try {
+    const res = await api.post("/auth/reset-password", data);
+    return res.data;
+  } catch (err) {
+    throw err;
   }
 };
 

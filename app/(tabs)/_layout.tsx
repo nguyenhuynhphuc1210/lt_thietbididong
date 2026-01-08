@@ -1,7 +1,11 @@
+import { useCart } from "@/contexts/CartContext";
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
+import { StyleSheet, Text, View } from "react-native";
 
 export default function TabLayout() {
+  const { count } = useCart();
+
   return (
     <Tabs
       screenOptions={{
@@ -34,7 +38,17 @@ export default function TabLayout() {
         options={{
           title: "Giỏ hàng",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="cart-outline" size={size} color={color} />
+            <View>
+              <Ionicons name="cart-outline" size={size} color={color} />
+
+              {count > 0 && (
+                <View style={styles.badge}>
+                  <Text style={styles.badgeText}>
+                    {count > 9 ? "9+" : count}
+                  </Text>
+                </View>
+              )}
+            </View>
           ),
         }}
       />
@@ -61,3 +75,23 @@ export default function TabLayout() {
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  badge: {
+    position: "absolute",
+    top: -6,
+    right: -10,
+    backgroundColor: "#ef4444",
+    borderRadius: 10,
+    minWidth: 18,
+    height: 18,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 4,
+  },
+  badgeText: {
+    color: "#fff",
+    fontSize: 11,
+    fontWeight: "700",
+  },
+});
