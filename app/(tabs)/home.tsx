@@ -45,9 +45,9 @@ interface Product {
 
 /* ================= MOCK BANNER ================= */
 const banners = [
-  { id: 1, image: "https://i.imgur.com/5KZ6K0p.jpg" },
-  { id: 2, image: "https://i.imgur.com/9Qn5K7B.jpg" },
-  { id: 3, image: "https://i.imgur.com/NvZ4GzK.jpg" },
+  { id: 1, image: require("@/assets/images/banner1.jpg") },
+  { id: 2, image: require("@/assets/images/banner2.jpg") },
+  { id: 3, image: require("@/assets/images/banner3.jpg") },
 ];
 
 export default function HomeScreen() {
@@ -61,6 +61,7 @@ export default function HomeScreen() {
   const [keyword, setKeyword] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [selectedBrand, setSelectedBrand] = useState<number | null>(null);
+  
 
   useEffect(() => {
     loadHome();
@@ -125,7 +126,7 @@ export default function HomeScreen() {
 
   /* ================= UI ================= */
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["top"]}>
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* HEADER */}
         <AppHeader />
@@ -148,7 +149,11 @@ export default function HomeScreen() {
           showsHorizontalScrollIndicator={false}
           keyExtractor={(i) => i.id.toString()}
           renderItem={({ item }) => (
-            <Image source={{ uri: item.image }} style={styles.banner} />
+            <Image
+              source={item.image}
+              style={styles.banner}
+              resizeMode="cover"
+            />
           )}
         />
 
@@ -261,7 +266,7 @@ const styles = StyleSheet.create({
 
   banner: {
     width: width - 32,
-    height: 160,
+    aspectRatio: 16 / 9,
     borderRadius: 16,
     marginHorizontal: 16,
     marginTop: 10,

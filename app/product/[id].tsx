@@ -1,5 +1,6 @@
 import api from "@/constants/api";
 import { useCart } from "@/contexts/CartContext";
+import { useWishlist } from "@/contexts/WishlistContext";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -18,7 +19,6 @@ import Toast from "react-native-toast-message";
 
 const { width } = Dimensions.get("window");
 
-/* ================= TYPES ================= */
 interface ProductDetail {
   id: number;
   name: string;
@@ -34,12 +34,13 @@ export default function ProductDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { addItem } = useCart();
 
+  // ⭐⭐ wishlist context
+  const { isWishlisted, toggleWishlist } = useWishlist();
+
   const [product, setProduct] = useState<ProductDetail | null>(null);
   const [loading, setLoading] = useState(true);
-  const [wishlisted, setWishlisted] = useState(false);
   const [adding, setAdding] = useState(false);
 
-  /* ================= FETCH PRODUCT ================= */
   useEffect(() => {
     if (!id) return;
 
@@ -58,7 +59,6 @@ export default function ProductDetailScreen() {
     fetchProduct();
   }, [id]);
 
-  /* ================= HANDLERS ================= */
   const handleAddToCart = async () => {
     if (!product) return;
 
@@ -70,13 +70,7 @@ export default function ProductDetailScreen() {
         type: "success",
         text1: "Đã thêm vào giỏ hàng",
         position: "bottom",
-        visibilityTime: 1200,
-      });
-    } catch (e: any) {
-      Toast.show({
-        type: "error",
-        text1: e?.message || "Bạn cần đăng nhập",
-        position: "bottom",
+        visibilityTime: 1000,
       });
     } finally {
       setAdding(false);
@@ -86,18 +80,10 @@ export default function ProductDetailScreen() {
   const handleBuyNow = async () => {
     if (!product) return;
 
-    try {
-      await addItem(product.id, 1);
-      router.push("/cart");
-    } catch (e: any) {
-      Toast.show({
-        type: "error",
-        text1: e?.message || "Bạn cần đăng nhập",
-      });
-    }
+    await addItem(product.id, 1);
+    router.push("/cart");
   };
 
-  /* ================= LOADING ================= */
   if (loading) {
     return (
       <View style={styles.center}>
@@ -114,7 +100,6 @@ export default function ProductDetailScreen() {
     );
   }
 
-  /* ================= UI ================= */
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -126,18 +111,20 @@ export default function ProductDetailScreen() {
             ))}
           </ScrollView>
 
+          {/* 🔙 back */}
           <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
             <Ionicons name="arrow-back" size={22} />
           </TouchableOpacity>
 
+          {/* ❤️ wishlist */}
           <TouchableOpacity
             style={styles.heartBtn}
-            onPress={() => setWishlisted(!wishlisted)}
+            onPress={() => toggleWishlist(product.id)}
           >
             <Ionicons
-              name={wishlisted ? "heart" : "heart-outline"}
+              name={isWishlisted(product.id) ? "heart" : "heart-outline"}
               size={22}
-              color={wishlisted ? "#ef4444" : "#111"}
+              color={isWishlisted(product.id) ? "#ef4444" : "#111"}
             />
           </TouchableOpacity>
         </View>

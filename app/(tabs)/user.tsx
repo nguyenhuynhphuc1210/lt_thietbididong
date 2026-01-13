@@ -1,53 +1,53 @@
 import { logout } from "@/hooks/useAuth";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useFocusEffect } from "@react-navigation/native";
 import { router } from "expo-router";
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 export default function UserScreen() {
-  const [fullName, setFullName] = useState<string>("");
+  const [fullName, setFullName] = useState<string>("Người dùng");
   const [showConfirm, setShowConfirm] = useState(false);
 
-  // Xử lý đăng xuất
   const confirmLogout = async () => {
     await logout();
     setShowConfirm(false);
-    router.replace("/login"); // Chuyển hướng về trang đăng nhập
+    router.replace("/login");
   };
 
-  // Lấy dữ liệu fullName từ AsyncStorage khi vào trang
-  useEffect(() => {
-    const loadUser = async () => {
-      try {
+  // 👉 chạy MỖI KHI quay lại màn hình này
+  useFocusEffect(
+    useCallback(() => {
+      const loadUser = async () => {
         const userStr = await AsyncStorage.getItem("user");
-        if (userStr) {
-          const data = JSON.parse(userStr);
+        if (!userStr) return;
 
-          if (data.user && data.user.fullName) {
-            setFullName(data.user.fullName);
-          } else {
-            setFullName("Người dùng");
-          }
+        const data = JSON.parse(userStr);
+
+        if (data.user?.fullName) {
+          setFullName(data.user.fullName);
+        } else {
+          setFullName("Người dùng");
         }
-      } catch (error) {
-        console.error("Lỗi khi tải thông tin:", error);
-        setFullName("Người dùng");
-      }
-    };
-    loadUser();
-  }, []);
+      };
+
+      loadUser();
+    }, [])
+  );
 
   return (
     <View style={styles.container}>
-      {/* Header chỉ hiển thị Avatar và Full Name */}
       <View style={styles.header}>
         <Ionicons name="person-circle-outline" size={80} color="#007AFF" />
         <Text style={styles.fullNameText}>{fullName}</Text>
       </View>
 
       <View style={styles.menu}>
-        <TouchableOpacity style={styles.menuItem}>
+        <TouchableOpacity
+          style={styles.menuItem}
+          onPress={() => router.push("/account-setting")}
+        >
           <Ionicons name="settings-outline" size={24} color="#333" />
           <Text style={styles.menuText}>Cài đặt tài khoản</Text>
         </TouchableOpacity>
@@ -60,7 +60,6 @@ export default function UserScreen() {
           <Text style={[styles.menuText, { color: "#FF3B30" }]}>Đăng xuất</Text>
         </TouchableOpacity>
 
-        {/* Modal xác nhận đăng xuất */}
         <Modal transparent visible={showConfirm} animationType="fade">
           <View style={styles.modalOverlay}>
             <View style={styles.modalBox}>

@@ -5,6 +5,7 @@ export const login = async (email: string, password: string) => {
   try {
     const res = await api.post("/auth/login", { email, password });
     await AsyncStorage.setItem("user", JSON.stringify(res.data));
+    
     return res.data;
   } catch (err) {
     throw err;

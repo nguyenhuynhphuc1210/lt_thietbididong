@@ -40,3 +40,11 @@ export const clearCart = async () => {
     params: { userId },
   });
 };
+
+export const decreaseFromCart = async (productId: number) => {
+  const userId = await getUserId();
+  return api.put("/cart/decrease", null, {
+    params: { userId, productId },
+  });
+};
+

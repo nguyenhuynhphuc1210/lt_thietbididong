@@ -1,4 +1,5 @@
 import { CartProvider } from "@/contexts/CartContext";
+import { WishlistProvider } from "@/contexts/WishlistContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Stack } from "expo-router";
 import { useEffect, useState } from "react";
@@ -16,15 +17,17 @@ export default function RootLayout() {
   if (isAuth === null) return null; // loading
 
   return (
-    <CartProvider>
-      <Stack screenOptions={{ headerShown: false }}>
-        {isAuth ? (
-          <Stack.Screen name="(tabs)" />
-        ) : (
-          <Stack.Screen name="(auth)" />
-        )}
-      </Stack>
-      <Toast />
-    </CartProvider>
+    <WishlistProvider>
+      <CartProvider>
+        <Stack screenOptions={{ headerShown: false }}>
+          {isAuth ? (
+            <Stack.Screen name="(tabs)" />
+          ) : (
+            <Stack.Screen name="(auth)" />
+          )}
+        </Stack>
+        <Toast />
+      </CartProvider>
+    </WishlistProvider>
   );
 }

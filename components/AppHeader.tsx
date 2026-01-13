@@ -1,20 +1,26 @@
 import { getCurrentUser } from "@/hooks/useAuth";
-import React, { useEffect, useState } from "react";
+import { useFocusEffect } from "@react-navigation/native";
+import React, { useCallback, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
 export default function AppHeader() {
   const [fullName, setFullName] = useState<string>("");
 
-  useEffect(() => {
-    loadUser();
-  }, []);
-
   const loadUser = async () => {
     const data = await getCurrentUser();
     if (data?.user?.fullName) {
       setFullName(data.user.fullName);
+    } else {
+      setFullName("");
     }
   };
+
+  // 👉 chạy lại mỗi khi màn hình được focus
+  useFocusEffect(
+    useCallback(() => {
+      loadUser();
+    }, [])
+  );
 
   return (
     <View style={styles.container}>

@@ -1,3 +1,4 @@
+import { useWishlist } from "@/contexts/WishlistContext";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import {
@@ -20,8 +21,7 @@ interface ProductCardProps {
 
   onPress?: (id: number) => void;
   onAddToCart?: (id: number) => void;
-  onToggleWishlist?: (id: number) => void;
-  isWishlisted?: boolean;
+  onToggleWishlist: () => void;
 }
 
 export default function ProductCard({
@@ -32,9 +32,9 @@ export default function ProductCard({
   imageUrl,
   onPress,
   onAddToCart,
-  onToggleWishlist,
-  isWishlisted = false,
 }: ProductCardProps) {
+  const { isWishlisted, toggleWishlist } = useWishlist();
+
   return (
     <TouchableOpacity
       activeOpacity={0.9}
@@ -44,21 +44,22 @@ export default function ProductCard({
       {/* IMAGE */}
       <View style={styles.imageWrapper}>
         <Image
-          source={{
-            uri: imageUrl || "https://via.placeholder.com/300",
-          }}
+          source={{ uri: imageUrl || "https://via.placeholder.com/300" }}
           style={styles.image}
         />
 
         {/* ❤️ HEART ICON */}
         <TouchableOpacity
           style={styles.heartButton}
-          onPress={() => onToggleWishlist?.(id)}
+          onPress={(e) => {
+            e.stopPropagation(); // ⛔ không mở product detail
+            toggleWishlist(id);
+          }}
         >
           <Ionicons
-            name={isWishlisted ? "heart" : "heart-outline"}
+            name={isWishlisted(id) ? "heart" : "heart-outline"}
             size={20}
-            color={isWishlisted ? "#ef4444" : "#333"}
+            color={isWishlisted(id) ? "#ef4444" : "#333"}
           />
         </TouchableOpacity>
       </View>
@@ -72,14 +73,15 @@ export default function ProductCard({
         </Text>
 
         <View style={styles.bottomRow}>
-          <Text style={styles.price}>
-            {price.toLocaleString("vi-VN")} đ
-          </Text>
+          <Text style={styles.price}>{price.toLocaleString("vi-VN")} đ</Text>
 
           {/* 🛒 CART ICON */}
           <TouchableOpacity
             style={styles.cartButton}
-            onPress={() => onAddToCart?.(id)}
+            onPress={(e) => {
+              e.stopPropagation();
+              onAddToCart?.(id);
+            }}
           >
             <Ionicons name="cart-outline" size={18} color="#fff" />
           </TouchableOpacity>
@@ -102,7 +104,6 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
 
-  /* IMAGE */
   imageWrapper: {
     position: "relative",
   },
@@ -113,7 +114,6 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 16,
   },
 
-  /* HEART */
   heartButton: {
     position: "absolute",
     top: 8,
@@ -127,7 +127,6 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
 
-  /* INFO */
   info: {
     padding: 10,
   },
@@ -143,7 +142,6 @@ const styles = StyleSheet.create({
     height: 40,
   },
 
-  /* PRICE + CART */
   bottomRow: {
     flexDirection: "row",
     justifyContent: "space-between",

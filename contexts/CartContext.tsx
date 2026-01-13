@@ -1,11 +1,13 @@
+import { getCurrentUser } from "@/hooks/useAuth";
 import {
-    addToCart,
-    clearCart,
-    getCart,
-    removeFromCart,
+  addToCart,
+  clearCart,
+  decreaseFromCart,
+  getCart,
+  removeFromCart,
 } from "@/services/cartService";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 
 type CartItem = {
   productId: number;
@@ -28,114 +30,110 @@ type CartContextType = {
 
 const CartContext = createContext<CartContextType>({} as CartContextType);
 
-const STORAGE_KEY = "cart_cache";
-
 export const CartProvider = ({ children }: { children: React.ReactNode }) => {
   const [items, setItems] = useState<CartItem[]>([]);
+  const [userId, setUserId] = useState<number | null>(null);
+
   const syncing = useRef(false);
 
-  /* ================= LOAD CACHE FIRST ================= */
+  /* -------- 1. Lấy user hiện tại -------- */
   useEffect(() => {
-    AsyncStorage.getItem(STORAGE_KEY).then((cache) => {
-      if (cache) setItems(JSON.parse(cache));
-    });
+    const loadUser = async () => {
+      try {
+        const res = await getCurrentUser();
+        setUserId(res?.user?.id ?? null);
+      } catch {
+        setUserId(null);
+      }
+    };
 
-    refresh(); // sync server sau
+    loadUser();
   }, []);
 
-  /* ================= PERSIST ================= */
-  useEffect(() => {
-    AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-  }, [items]);
+  /* -------- 2. storage key theo user -------- */
+  const storageKey = userId ? `cart_${userId}` : "cart_guest";
 
-  /* ================= API SYNC ================= */
-  const refresh = async () => {
+  /* -------- 3. Refresh API -------- */
+  const refresh = useCallback(async () => {
+    if (!userId) return;
     if (syncing.current) return;
+
     syncing.current = true;
 
     try {
       const res = await getCart();
-      setItems(res.data);
-    } catch (e) {
-      console.log("Cart sync error:", e);
+      setItems(res.data || []);
+    } catch {
+      console.log("cart sync error");
     } finally {
       syncing.current = false;
     }
-  };
+  }, [userId]);
 
-  /* ================= HELPERS ================= */
-  const optimisticAdd = (productId: number, qty: number) => {
+  /* -------- 4. Load cache khi user thay đổi -------- */
+  useEffect(() => {
+    const load = async () => {
+      const cache = await AsyncStorage.getItem(storageKey);
+
+      if (cache) setItems(JSON.parse(cache));
+      else setItems([]);
+
+      if (userId) await refresh();
+    };
+
+    load();
+  }, [userId, storageKey, refresh]);
+
+  /* -------- 5. Persist cache -------- */
+  useEffect(() => {
+    AsyncStorage.setItem(storageKey, JSON.stringify(items));
+  }, [items, storageKey]);
+
+  /* -------- 6. Actions -------- */
+  const addItem = async (productId: number, qty = 1) => {
     setItems((prev) => {
       const found = prev.find((i) => i.productId === productId);
       if (found) {
         return prev.map((i) =>
-          i.productId === productId
-            ? { ...i, quantity: i.quantity + qty }
-            : i
+          i.productId === productId ? { ...i, quantity: i.quantity + qty } : i
         );
       }
-      return prev; // server sẽ trả item đầy đủ
+      return prev;
     });
-  };
 
-  /* ================= ACTIONS ================= */
-  const addItem = async (productId: number, qty = 1) => {
-    optimisticAdd(productId, qty);
-
-    try {
-      await addToCart(productId, qty);
-      refresh();
-    } catch (e) {
-      refresh(); // rollback
-      throw e;
-    }
+    if (userId) await addToCart(productId, qty);
+    await refresh();
   };
 
   const decreaseItem = async (productId: number) => {
-    setItems((prev) =>
-      prev
-        .map((i) =>
-          i.productId === productId
-            ? { ...i, quantity: i.quantity - 1 }
-            : i
-        )
-        .filter((i) => i.quantity > 0)
-    );
+  setItems((prev) =>
+    prev
+      .map((i) =>
+        i.productId === productId
+          ? { ...i, quantity: i.quantity - 1 }
+          : i
+      )
+      .filter((i) => i.quantity > 0)
+  );
 
-    try {
-      await removeFromCart(productId);
-      refresh();
-    } catch (e) {
-      refresh();
-      throw e;
-    }
-  };
+  if (userId) await decreaseFromCart(productId);
+  await refresh();
+};
+
 
   const removeItem = async (productId: number) => {
-    const backup = items;
     setItems((prev) => prev.filter((i) => i.productId !== productId));
 
-    try {
-      await removeFromCart(productId);
-    } catch (e) {
-      setItems(backup);
-      throw e;
-    }
+    if (userId) await removeFromCart(productId);
   };
 
   const clear = async () => {
-    const backup = items;
     setItems([]);
 
-    try {
-      await clearCart();
-    } catch (e) {
-      setItems(backup);
-      throw e;
-    }
+    if (userId) await clearCart();
   };
 
-  /* ================= DERIVED ================= */
+  /* -------- 7. Derived -------- */
   const count = items.reduce((s, i) => s + i.quantity, 0);
   const total = items.reduce((s, i) => s + i.quantity * i.price, 0);
 
