@@ -23,7 +23,7 @@ export const WishlistProvider = ({ children }: any) => {
     const loadUserAndWishlist = async () => {
       const data = await getCurrentUser();
 
-      const newUserId = data?.user?.id ?? null;
+      const newUserId = data?.id ?? null;
 
       // nếu đổi user → reset & load lại
       if (newUserId !== userId) {
@@ -62,10 +62,7 @@ export const WishlistProvider = ({ children }: any) => {
 
     setWishlist(newList);
 
-    await AsyncStorage.setItem(
-      `wishlist_${userId}`,
-      JSON.stringify(newList)
-    );
+    await AsyncStorage.setItem(`wishlist_${userId}`, JSON.stringify(newList));
   };
 
   return (

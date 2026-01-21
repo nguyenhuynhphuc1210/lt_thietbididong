@@ -6,7 +6,7 @@ const getUserId = async (): Promise<number> => {
   if (!stored) throw new Error("Bạn cần đăng nhập");
 
   const user = JSON.parse(stored);
-  return user.user.id;
+  return user.id;
 };
 
 // GET CART
@@ -18,11 +18,7 @@ export const getCart = async () => {
 // ADD TO CART
 export const addToCart = async (productId: number, quantity = 1) => {
   const userId = await getUserId();
-  return api.post(
-    "/cart/add",
-    { productId, quantity },
-    { params: { userId } }
-  );
+  return api.post("/cart/add", { productId, quantity }, { params: { userId } });
 };
 
 // REMOVE ITEM
@@ -47,4 +43,3 @@ export const decreaseFromCart = async (productId: number) => {
     params: { userId, productId },
   });
 };
-

@@ -2,6 +2,7 @@ import api from "@/constants/api";
 import { useCart } from "@/contexts/CartContext";
 import { useWishlist } from "@/contexts/WishlistContext";
 import { Ionicons } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
@@ -14,7 +15,10 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 
 const { width } = Dimensions.get("window");
@@ -33,13 +37,13 @@ interface ProductDetail {
 export default function ProductDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { addItem } = useCart();
-
-  // ⭐⭐ wishlist context
   const { isWishlisted, toggleWishlist } = useWishlist();
 
   const [product, setProduct] = useState<ProductDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [adding, setAdding] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     if (!id) return;
@@ -87,7 +91,7 @@ export default function ProductDetailScreen() {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="#007AFF" />
+        <ActivityIndicator size="large" color="#C9A862" />
       </View>
     );
   }
@@ -95,83 +99,214 @@ export default function ProductDetailScreen() {
   if (!product) {
     return (
       <View style={styles.center}>
-        <Text>Không tìm thấy sản phẩm</Text>
+        <Text style={styles.emptyText}>Không tìm thấy sản phẩm</Text>
       </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["top"]}>
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* ===== IMAGES ===== */}
+        {/* ===== IMAGE GALLERY ===== */}
         <View style={styles.imageWrapper}>
-          <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false}>
+          <ScrollView
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            onScroll={(e) => {
+              const x = e.nativeEvent.contentOffset.x;
+              const index = Math.round(x / width);
+              setCurrentImageIndex(index);
+            }}
+            scrollEventThrottle={16}
+          >
             {product.images.map((img, idx) => (
-              <Image key={idx} source={{ uri: img.imageUrl }} style={styles.image} />
+              <View key={idx} style={styles.imageContainer}>
+                <Image
+                  source={{ uri: img.imageUrl }}
+                  style={styles.image}
+                  resizeMode="cover"
+                />
+                <LinearGradient
+                  colors={["transparent", "rgba(0,0,0,0.3)"]}
+                  style={styles.imageGradient}
+                />
+              </View>
             ))}
           </ScrollView>
 
-          {/* 🔙 back */}
-          <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-            <Ionicons name="arrow-back" size={22} />
+          {/* IMAGE INDICATORS */}
+          {product.images.length > 1 && (
+            <View style={styles.indicatorContainer}>
+              {product.images.map((_, idx) => (
+                <View
+                  key={idx}
+                  style={[
+                    styles.indicator,
+                    currentImageIndex === idx && styles.indicatorActive,
+                  ]}
+                />
+              ))}
+            </View>
+          )}
+
+          {/* BACK BUTTON */}
+          <TouchableOpacity
+            style={styles.backBtn}
+            onPress={() => router.back()}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="arrow-back" size={22} color="#1A1A1A" />
           </TouchableOpacity>
 
-          {/* ❤️ wishlist */}
+          {/* WISHLIST BUTTON */}
           <TouchableOpacity
             style={styles.heartBtn}
             onPress={() => toggleWishlist(product.id)}
+            activeOpacity={0.8}
           >
             <Ionicons
               name={isWishlisted(product.id) ? "heart" : "heart-outline"}
               size={22}
-              color={isWishlisted(product.id) ? "#ef4444" : "#111"}
+              color={isWishlisted(product.id) ? "#EF4444" : "#1A1A1A"}
             />
           </TouchableOpacity>
         </View>
 
-        {/* ===== INFO ===== */}
+        {/* ===== PRODUCT INFO ===== */}
         <View style={styles.content}>
-          <View style={styles.meta}>
-            <Text style={styles.brand}>{product.brandName}</Text>
-            <Text style={styles.dot}>•</Text>
-            <Text style={styles.category}>{product.categoryName}</Text>
+          {/* BRAND & CATEGORY */}
+          <View style={styles.metaContainer}>
+            <View style={styles.metaBadge}>
+              <Ionicons name="diamond-outline" size={12} color="#C9A862" />
+              <Text style={styles.brandText}>{product.brandName}</Text>
+            </View>
+            <View style={styles.metaDivider} />
+            <View style={styles.metaBadge}>
+              <Ionicons name="pricetag-outline" size={12} color="#C9A862" />
+              <Text style={styles.categoryText}>{product.categoryName}</Text>
+            </View>
           </View>
 
+          {/* PRODUCT NAME */}
           <Text style={styles.name}>{product.name}</Text>
 
-          <Text style={styles.price}>
-            {product.price.toLocaleString("vi-VN")} đ
-          </Text>
+          {/* PRICE */}
+          <View style={styles.priceContainer}>
+            <View style={styles.priceWrapper}>
+              <Text style={styles.priceLabel}>GIÁ BÁN</Text>
+              <Text style={styles.price}>
+                {product.price.toLocaleString("vi-VN")}₫
+              </Text>
+            </View>
+          </View>
 
-          <Text style={styles.section}>Mô tả</Text>
-          <Text style={styles.desc}>
-            {product.description || "Đồng hồ chính hãng cao cấp."}
-          </Text>
+          {/* DIVIDER */}
+          <View style={styles.divider} />
 
-          <Text style={styles.section}>Thông số kỹ thuật</Text>
-          <View style={styles.specBox}>
-            <Text style={styles.specText}>
-              {product.specification || "Đang cập nhật."}
+          {/* DESCRIPTION */}
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Ionicons
+                name="document-text-outline"
+                size={20}
+                color="#C9A862"
+              />
+              <Text style={styles.sectionTitle}>Mô Tả Sản Phẩm</Text>
+            </View>
+            <Text style={styles.descText}>
+              {product.description ||
+                "Đồng hồ chính hãng cao cấp với thiết kế tinh tế, chất lượng đảm bảo."}
             </Text>
           </View>
+
+          {/* SPECIFICATIONS */}
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Ionicons name="settings-outline" size={20} color="#C9A862" />
+              <Text style={styles.sectionTitle}>Thông Số Kỹ Thuật</Text>
+            </View>
+            <View style={styles.specBox}>
+              <Text style={styles.specText}>
+                {product.specification ||
+                  "• Chất liệu: Thép không gỉ cao cấp\n• Kháng nước: 5ATM\n• Bảo hành: 12 tháng chính hãng"}
+              </Text>
+            </View>
+          </View>
+
+          {/* FEATURES */}
+          <View style={styles.featuresContainer}>
+            <View style={styles.featureItem}>
+              <View style={styles.featureIcon}>
+                <Ionicons name="shield-checkmark" size={24} color="#C9A862" />
+              </View>
+              <Text style={styles.featureText}>Chính Hãng{"\n"}100%</Text>
+            </View>
+            <View style={styles.featureItem}>
+              <View style={styles.featureIcon}>
+                <Ionicons name="sync" size={24} color="#C9A862" />
+              </View>
+              <Text style={styles.featureText}>Đổi Trả{"\n"}7 Ngày</Text>
+            </View>
+            <View style={styles.featureItem}>
+              <View style={styles.featureIcon}>
+                <Ionicons name="gift" size={24} color="#C9A862" />
+              </View>
+              <Text style={styles.featureText}>Bảo Hành{"\n"}12 Tháng</Text>
+            </View>
+            <View style={styles.featureItem}>
+              <View style={styles.featureIcon}>
+                <Ionicons name="car" size={24} color="#C9A862" />
+              </View>
+              <Text style={styles.featureText}>Giao Hàng{"\n"}Miễn Phí</Text>
+            </View>
+          </View>
+
+          {/* BOTTOM SPACING */}
+          <View style={{ height: 100 }} />
         </View>
       </ScrollView>
 
-      {/* ===== BOTTOM BAR ===== */}
-      <View style={styles.bottomBar}>
+      {/* ===== BOTTOM ACTION BAR ===== */}
+      <View
+        style={[
+          styles.bottomBar,
+          { paddingBottom: insets.bottom > 0 ? insets.bottom : 16 },
+        ]}
+      >
         <TouchableOpacity
           style={styles.cartBtn}
           onPress={handleAddToCart}
           disabled={adding}
+          activeOpacity={0.8}
         >
-          <Ionicons name="cart-outline" size={20} />
-          <Text style={styles.cartText}>
-            {adding ? "Đang thêm..." : "Thêm giỏ"}
-          </Text>
+          <View style={styles.cartBtnContent}>
+            <Ionicons name="cart-outline" size={20} color="#C9A862" />
+            <Text style={styles.cartText}>
+              {adding ? "Đang thêm..." : "Thêm giỏ"}
+            </Text>
+          </View>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.buyBtn} onPress={handleBuyNow}>
-          <Text style={styles.buyText}>Mua ngay</Text>
+        <TouchableOpacity
+          style={styles.buyBtn}
+          onPress={handleBuyNow}
+          activeOpacity={0.9}
+        >
+          <LinearGradient
+            colors={["#C9A862", "#A68B4D"]}
+            style={styles.buyGradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+          >
+            <Ionicons
+              name="flash"
+              size={18}
+              color="#FFFFFF"
+              style={{ marginRight: 6 }}
+            />
+            <Text style={styles.buyText}>MUA NGAY</Text>
+          </LinearGradient>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -180,86 +315,332 @@ export default function ProductDetailScreen() {
 
 /* ================= STYLES ================= */
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
-  center: { flex: 1, justifyContent: "center", alignItems: "center" },
+  container: {
+    flex: 1,
+    backgroundColor: "#F5F5F0",
+  },
+  center: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#F5F5F0",
+  },
+  emptyText: {
+    fontSize: 16,
+    color: "#666",
+    fontWeight: "500",
+  },
 
-  imageWrapper: { position: "relative" },
-  image: { width, height: 320 },
+  /* IMAGE GALLERY */
+  imageWrapper: {
+    position: "relative",
+    backgroundColor: "#FFFFFF",
+  },
+  imageContainer: {
+    position: "relative",
+  },
+  image: {
+    width,
+    height: 380,
+  },
+  imageGradient: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 100,
+  },
 
+  /* IMAGE INDICATORS */
+  indicatorContainer: {
+    position: "absolute",
+    bottom: 20,
+    left: 0,
+    right: 0,
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  indicator: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "rgba(255,255,255,0.5)",
+    marginHorizontal: 4,
+  },
+  indicatorActive: {
+    width: 24,
+    backgroundColor: "#FFFFFF",
+  },
+
+  /* BUTTONS ON IMAGE */
   backBtn: {
     position: "absolute",
     top: 16,
     left: 16,
-    backgroundColor: "#fff",
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    backgroundColor: "rgba(255,255,255,0.95)",
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     justifyContent: "center",
     alignItems: "center",
-    elevation: 4,
-  },
 
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 5,
+  },
   heartBtn: {
     position: "absolute",
     top: 16,
     right: 16,
-    backgroundColor: "#fff",
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    backgroundColor: "rgba(255,255,255,0.95)",
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     justifyContent: "center",
     alignItems: "center",
-    elevation: 4,
+
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 5,
   },
 
-  content: { padding: 16 },
+  /* CONTENT */
+  content: {
+    padding: 20,
+    backgroundColor: "#F5F5F0",
+  },
 
-  meta: { flexDirection: "row", alignItems: "center" },
-  brand: { fontSize: 12, color: "#999" },
-  dot: { marginHorizontal: 6, color: "#999" },
-  category: { fontSize: 12, color: "#999" },
+  /* META */
+  metaContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  metaBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(201, 168, 98, 0.1)",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 12,
+  },
+  brandText: {
+    fontSize: 12,
+    color: "#C9A862",
+    fontWeight: "700",
+    marginLeft: 4,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  metaDivider: {
+    width: 1,
+    height: 12,
+    backgroundColor: "#E0E0E0",
+    marginHorizontal: 10,
+  },
+  categoryText: {
+    fontSize: 12,
+    color: "#C9A862",
+    fontWeight: "600",
+    marginLeft: 4,
+  },
 
-  name: { fontSize: 20, fontWeight: "700", marginVertical: 6 },
-  price: { fontSize: 22, fontWeight: "700", color: "#d32f2f" },
+  /* PRODUCT NAME */
+  name: {
+    fontSize: 24,
+    fontWeight: "700",
+    color: "#1A1A1A",
+    lineHeight: 32,
+    marginBottom: 16,
+    letterSpacing: 0.3,
+  },
 
-  section: { fontSize: 16, fontWeight: "600", marginTop: 16 },
-  desc: { fontSize: 14, color: "#555", lineHeight: 22 },
+  /* PRICE */
+  priceContainer: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 20,
 
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  priceWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  priceLabel: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#999",
+    letterSpacing: 1.5,
+  },
+  price: {
+    fontSize: 28,
+    fontWeight: "800",
+    color: "#C9A862",
+    letterSpacing: 0.5,
+  },
+
+  /* DIVIDER */
+  divider: {
+    height: 1,
+    backgroundColor: "#E0E0E0",
+    marginVertical: 20,
+  },
+
+  /* SECTION */
+  section: {
+    marginBottom: 20,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#1A1A1A",
+    marginLeft: 8,
+    letterSpacing: 0.3,
+  },
+  descText: {
+    fontSize: 15,
+    color: "#555",
+    lineHeight: 24,
+  },
+
+  /* SPECIFICATIONS BOX */
   specBox: {
-    backgroundColor: "#f9fafb",
-    padding: 12,
-    borderRadius: 10,
-    marginTop: 6,
+    backgroundColor: "#FFFFFF",
+    padding: 16,
+    borderRadius: 12,
+    borderLeftWidth: 3,
+    borderLeftColor: "#C9A862",
+
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  specText: {
+    fontSize: 14,
+    color: "#444",
+    lineHeight: 22,
   },
 
-  specText: { fontSize: 14, color: "#444" },
+  /* FEATURES */
+  featuresContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    padding: 16,
+    marginTop: 20,
 
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  featureItem: {
+    alignItems: "center",
+    flex: 1,
+  },
+  featureIcon: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: "rgba(201, 168, 98, 0.1)",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  featureText: {
+    fontSize: 11,
+    color: "#666",
+    textAlign: "center",
+    fontWeight: "600",
+    lineHeight: 16,
+  },
+
+  /* BOTTOM BAR */
   bottomBar: {
     flexDirection: "row",
-    padding: 12,
+    alignItems: "center", // Đảm bảo 2 nút luôn thẳng hàng ngang
+    paddingHorizontal: 16,
+    paddingTop: 12, // Thêm padding top cho thoáng
+    backgroundColor: "#FFFFFF",
     borderTopWidth: 1,
-    borderColor: "#eee",
-  },
+    borderColor: "#E8E8E8",
 
+    // Đổ bóng cho cả thanh bar để tạo cảm giác nổi lên trên nội dung
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -3 },
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+    elevation: 10,
+  },
   cartBtn: {
+    borderWidth: 2,
+    borderColor: "#C9A862",
+    borderRadius: 14,
+    marginRight: 12,
+    backgroundColor: "#FFFFFF",
+  },
+  cartBtnContent: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 12,
-    borderWidth: 1,
-    borderColor: "#fbbf24",
-    borderRadius: 10,
-    marginRight: 10,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+  },
+  cartText: {
+    marginLeft: 6,
+    fontWeight: "700",
+    color: "#C9A862",
+    fontSize: 14,
+    letterSpacing: 0.5,
   },
 
-  cartText: { marginLeft: 6, fontWeight: "600" },
-
+  /* BUY BUTTON */
   buyBtn: {
     flex: 1,
-    backgroundColor: "#fbbf24",
-    borderRadius: 10,
-    justifyContent: "center",
-    alignItems: "center",
+    // Bỏ overflow: "hidden" ở đây để hiện shadow
+    borderRadius: 14,
+    backgroundColor: "#FFFFFF", // Cần có màu nền để shadow hiển thị tốt trên iOS
+
+    // Shadow cho nút
+    shadowColor: "#C9A862",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 5,
   },
 
-  buyText: { fontSize: 16, fontWeight: "700" },
+  buyGradient: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 16,
+    borderRadius: 14, // Thêm borderRadius vào đây
+    overflow: "hidden", // Để gradient bo theo nút
+  },
+  buyText: {
+    fontSize: 15,
+    fontWeight: "800",
+    color: "#FFFFFF",
+    letterSpacing: 1.5,
+  },
 });

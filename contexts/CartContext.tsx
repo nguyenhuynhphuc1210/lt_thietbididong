@@ -7,62 +7,81 @@ import {
   removeFromCart,
 } from "@/services/cartService";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
-type CartItem = {
+/* ================= TYPES ================= */
+
+export type CartItem = {
   productId: number;
   productName: string;
   productImage: string;
   price: number;
   quantity: number;
+  selected: boolean; // ⭐ tick chọn
 };
 
 type CartContextType = {
   items: CartItem[];
   count: number;
-  total: number;
+  totalSelected: number;
+
+  toggleSelectItem: (productId: number) => void;
+  selectAll: (value: boolean) => void;
+
   addItem: (productId: number, qty?: number) => Promise<void>;
-  removeItem: (productId: number) => Promise<void>;
   decreaseItem: (productId: number) => Promise<void>;
+  removeItem: (productId: number) => Promise<void>;
   clear: () => Promise<void>;
   refresh: () => Promise<void>;
 };
 
 const CartContext = createContext<CartContextType>({} as CartContextType);
 
+/* ================= PROVIDER ================= */
+
 export const CartProvider = ({ children }: { children: React.ReactNode }) => {
   const [items, setItems] = useState<CartItem[]>([]);
   const [userId, setUserId] = useState<number | null>(null);
-
   const syncing = useRef(false);
 
-  /* -------- 1. Lấy user hiện tại -------- */
+  /* ---------- helpers ---------- */
+  const normalizeItems = (data: any[]): CartItem[] =>
+    data.map((i) => ({
+      ...i,
+      selected: i.selected ?? true,
+    }));
+
+  /* ---------- 1. load current user ---------- */
   useEffect(() => {
     const loadUser = async () => {
       try {
         const res = await getCurrentUser();
-        setUserId(res?.user?.id ?? null);
+        setUserId(res?.id ?? null);
       } catch {
         setUserId(null);
       }
     };
-
     loadUser();
   }, []);
 
-  /* -------- 2. storage key theo user -------- */
+  /* ---------- 2. storage key theo user ---------- */
   const storageKey = userId ? `cart_${userId}` : "cart_guest";
 
-  /* -------- 3. Refresh API -------- */
+  /* ---------- 3. refresh từ API ---------- */
   const refresh = useCallback(async () => {
-    if (!userId) return;
-    if (syncing.current) return;
+    if (!userId || syncing.current) return;
 
     syncing.current = true;
-
     try {
       const res = await getCart();
-      setItems(res.data || []);
+      setItems(normalizeItems(res.data || []));
     } catch {
       console.log("cart sync error");
     } finally {
@@ -70,12 +89,12 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, [userId]);
 
-  /* -------- 4. Load cache khi user thay đổi -------- */
+  /* ---------- 4. load cache khi user thay đổi ---------- */
   useEffect(() => {
     const load = async () => {
       const cache = await AsyncStorage.getItem(storageKey);
 
-      if (cache) setItems(JSON.parse(cache));
+      if (cache) setItems(normalizeItems(JSON.parse(cache)));
       else setItems([]);
 
       if (userId) await refresh();
@@ -84,42 +103,36 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
     load();
   }, [userId, storageKey, refresh]);
 
-  /* -------- 5. Persist cache -------- */
+  /* ---------- 5. persist cache ---------- */
   useEffect(() => {
     AsyncStorage.setItem(storageKey, JSON.stringify(items));
   }, [items, storageKey]);
 
-  /* -------- 6. Actions -------- */
+  /* ================= ACTIONS ================= */
+
   const addItem = async (productId: number, qty = 1) => {
-    setItems((prev) => {
-      const found = prev.find((i) => i.productId === productId);
-      if (found) {
-        return prev.map((i) =>
-          i.productId === productId ? { ...i, quantity: i.quantity + qty } : i
-        );
-      }
-      return prev;
-    });
+    setItems((prev) =>
+      prev.map((i) =>
+        i.productId === productId ? { ...i, quantity: i.quantity + qty } : i,
+      ),
+    );
 
     if (userId) await addToCart(productId, qty);
     await refresh();
   };
 
   const decreaseItem = async (productId: number) => {
-  setItems((prev) =>
-    prev
-      .map((i) =>
-        i.productId === productId
-          ? { ...i, quantity: i.quantity - 1 }
-          : i
-      )
-      .filter((i) => i.quantity > 0)
-  );
+    setItems((prev) =>
+      prev
+        .map((i) =>
+          i.productId === productId ? { ...i, quantity: i.quantity - 1 } : i,
+        )
+        .filter((i) => i.quantity > 0),
+    );
 
-  if (userId) await decreaseFromCart(productId);
-  await refresh();
-};
-
+    if (userId) await decreaseFromCart(productId);
+    await refresh();
+  };
 
   const removeItem = async (productId: number) => {
     setItems((prev) => prev.filter((i) => i.productId !== productId));
@@ -129,20 +142,41 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
 
   const clear = async () => {
     setItems([]);
-
     if (userId) await clearCart();
   };
 
-  /* -------- 7. Derived -------- */
+  /* ---------- select ---------- */
+
+  const toggleSelectItem = (productId: number) => {
+    setItems((prev) =>
+      prev.map((i) =>
+        i.productId === productId ? { ...i, selected: !i.selected } : i,
+      ),
+    );
+  };
+
+  const selectAll = (value: boolean) => {
+    setItems((prev) => prev.map((i) => ({ ...i, selected: value })));
+  };
+
+  /* ================= DERIVED ================= */
+
   const count = items.reduce((s, i) => s + i.quantity, 0);
-  const total = items.reduce((s, i) => s + i.quantity * i.price, 0);
+
+  const totalSelected = items
+    .filter((i) => i.selected)
+    .reduce((s, i) => s + i.quantity * i.price, 0);
+
+  /* ================= PROVIDER ================= */
 
   return (
     <CartContext.Provider
       value={{
         items,
         count,
-        total,
+        totalSelected,
+        toggleSelectItem,
+        selectAll,
         addItem,
         decreaseItem,
         removeItem,
@@ -154,5 +188,7 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
     </CartContext.Provider>
   );
 };
+
+/* ================= HOOK ================= */
 
 export const useCart = () => useContext(CartContext);

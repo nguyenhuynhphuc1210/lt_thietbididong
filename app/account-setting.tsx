@@ -1,6 +1,7 @@
 import api from "@/constants/api";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import {
@@ -27,9 +28,9 @@ export default function AccountSettingScreen() {
 
       const data = JSON.parse(userStr);
 
-      setFullName(data.user.fullName);
-      setPhone(data.user.phone || "");
-      setEmail(data.user.email);
+      setFullName(data.fullName);
+      setPhone(data.phone || "");
+      setEmail(data.email);
     };
 
     loadUser();
@@ -50,9 +51,8 @@ export default function AccountSettingScreen() {
       const userStr = await AsyncStorage.getItem("user");
       if (userStr) {
         const data = JSON.parse(userStr);
-        data.user.fullName = fullName;
-        data.user.phone = phone;
-
+        data.fullName = fullName;
+        data.phone = phone;
         await AsyncStorage.setItem("user", JSON.stringify(data));
       }
 
@@ -67,18 +67,13 @@ export default function AccountSettingScreen() {
   return (
     <View style={styles.container}>
       {/* HEADER */}
-      <View style={styles.header}>
-        {/* back left */}
+      <LinearGradient colors={["#C9A862", "#A68B4D"]} style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={20} color="#333" />
+          <Ionicons name="arrow-back" size={20} color="#fff" />
         </TouchableOpacity>
-
-        {/* centered title */}
         <Text style={styles.headerTitle}>Cài đặt tài khoản</Text>
-
-        {/* fake box to balance layout (same width as back button) */}
         <View style={{ width: 36 }} />
-      </View>
+      </LinearGradient>
 
       {/* BODY */}
       <View style={styles.body}>
@@ -87,6 +82,7 @@ export default function AccountSettingScreen() {
           style={styles.input}
           value={fullName}
           onChangeText={setFullName}
+          placeholder="Nhập họ tên"
         />
 
         <Text style={styles.label}>Số điện thoại</Text>
@@ -95,10 +91,15 @@ export default function AccountSettingScreen() {
           value={phone}
           onChangeText={setPhone}
           keyboardType="phone-pad"
+          placeholder="Nhập số điện thoại"
         />
 
         <Text style={styles.label}>Email (không thể thay đổi)</Text>
-        <TextInput style={styles.inputDisabled} value={email} editable={false} />
+        <TextInput
+          style={styles.inputDisabled}
+          value={email}
+          editable={false}
+        />
 
         <Text style={styles.label}>Mật khẩu mới</Text>
         <TextInput
@@ -110,83 +111,120 @@ export default function AccountSettingScreen() {
         />
 
         <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
-          <Text style={styles.saveBtnText}>Lưu thay đổi</Text>
+          <LinearGradient
+            colors={["#C9A862", "#A68B4D"]}
+            style={styles.saveBtnGradient}
+          >
+            <Text style={styles.saveBtnText}>Lưu thay đổi</Text>
+          </LinearGradient>
         </TouchableOpacity>
 
-        {message !== "" && <Text style={styles.success}>{message}</Text>}
-        {errorMessage !== "" && <Text style={styles.error}>{errorMessage}</Text>}
+        {message !== "" && (
+          <Text style={styles.success}>
+            <Ionicons name="checkmark-circle-outline" size={16} color="green" />{" "}
+            {message}
+          </Text>
+        )}
+        {errorMessage !== "" && (
+          <Text style={styles.error}>
+            <Ionicons name="alert-circle-outline" size={16} color="red" />{" "}
+            {errorMessage}
+          </Text>
+        )}
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f3f4f6" },
+  container: { flex: 1, backgroundColor: "#f5f5f5" },
 
   header: {
     paddingTop: 50,
-    paddingBottom: 12,
+    paddingBottom: 16,
     paddingHorizontal: 16,
-    backgroundColor: "white",
-
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 8,
   },
 
   backBtn: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: "#f2f2f2",
+    backgroundColor: "rgba(255,255,255,0.3)",
     alignItems: "center",
     justifyContent: "center",
-
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 3,
-    elevation: 3,
   },
 
   headerTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: "700",
+    color: "#fff",
     textAlign: "center",
     flex: 1,
   },
 
   body: { padding: 16 },
 
-  label: { fontSize: 14, fontWeight: "600", marginTop: 10 },
+  label: { fontSize: 14, fontWeight: "600", marginTop: 12, color: "#444" },
 
   input: {
-    backgroundColor: "white",
+    backgroundColor: "#fff",
     borderWidth: 1,
     borderColor: "#ddd",
-    padding: 10,
-    borderRadius: 10,
-    marginTop: 4,
+    padding: 12,
+    borderRadius: 12,
+    marginTop: 6,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
 
   inputDisabled: {
     backgroundColor: "#e5e7eb",
-    padding: 10,
-    borderRadius: 10,
-    marginTop: 4,
+    padding: 12,
+    borderRadius: 12,
+    marginTop: 6,
+    color: "#999",
   },
 
   saveBtn: {
-    backgroundColor: "#007AFF",
-    padding: 14,
-    marginTop: 20,
+    marginTop: 24,
     borderRadius: 12,
+    overflow: "hidden",
+  },
+
+  saveBtnGradient: {
+    paddingVertical: 14,
+    alignItems: "center",
+    borderRadius: 12,
+  },
+
+  saveBtnText: { color: "#fff", fontWeight: "700", fontSize: 16 },
+
+  success: {
+    color: "green",
+    marginTop: 12,
+    fontWeight: "600",
+    flexDirection: "row",
     alignItems: "center",
   },
 
-  saveBtnText: { color: "white", fontWeight: "700", fontSize: 16 },
-
-  success: { color: "green", marginTop: 10 },
-
-  error: { color: "red", marginTop: 10 },
+  error: {
+    color: "red",
+    marginTop: 12,
+    fontWeight: "600",
+    flexDirection: "row",
+    alignItems: "center",
+  },
 });

@@ -2,6 +2,7 @@ import { logout } from "@/hooks/useAuth";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
+import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { useCallback, useState } from "react";
 import { Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
@@ -16,39 +17,35 @@ export default function UserScreen() {
     router.replace("/login");
   };
 
-  // 👉 chạy MỖI KHI quay lại màn hình này
   useFocusEffect(
     useCallback(() => {
       const loadUser = async () => {
         const userStr = await AsyncStorage.getItem("user");
         if (!userStr) return;
-
         const data = JSON.parse(userStr);
-
-        if (data.user?.fullName) {
-          setFullName(data.user.fullName);
-        } else {
-          setFullName("Người dùng");
-        }
+        setFullName(data.fullName || "Người dùng");
       };
-
       loadUser();
-    }, [])
+    }, []),
   );
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Ionicons name="person-circle-outline" size={80} color="#007AFF" />
+      {/* HEADER */}
+      <LinearGradient colors={["#C9A862", "#A68B4D"]} style={styles.header}>
+        <Ionicons name="person-circle-outline" size={90} color="#fff" />
         <Text style={styles.fullNameText}>{fullName}</Text>
-      </View>
+      </LinearGradient>
 
+      {/* MENU */}
       <View style={styles.menu}>
         <TouchableOpacity
           style={styles.menuItem}
           onPress={() => router.push("/account-setting")}
         >
-          <Ionicons name="settings-outline" size={24} color="#333" />
+          <View style={styles.iconCircle}>
+            <Ionicons name="settings-outline" size={24} color="#C9A862" />
+          </View>
           <Text style={styles.menuText}>Cài đặt tài khoản</Text>
         </TouchableOpacity>
 
@@ -56,57 +53,84 @@ export default function UserScreen() {
           style={styles.menuItem}
           onPress={() => setShowConfirm(true)}
         >
-          <Ionicons name="log-out-outline" size={24} color="#FF3B30" />
+          <View
+            style={[
+              styles.iconCircle,
+              { backgroundColor: "rgba(255,59,48,0.1)" },
+            ]}
+          >
+            <Ionicons name="log-out-outline" size={24} color="#FF3B30" />
+          </View>
           <Text style={[styles.menuText, { color: "#FF3B30" }]}>Đăng xuất</Text>
         </TouchableOpacity>
+      </View>
 
-        <Modal transparent visible={showConfirm} animationType="fade">
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalBox}>
-              <Text style={styles.modalTitle}>
-                Bạn có chắc chắn muốn đăng xuất?
-              </Text>
+      {/* MODAL LOGOUT */}
+      <Modal transparent visible={showConfirm} animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalBox}>
+            <Text style={styles.modalTitle}>
+              Bạn có chắc chắn muốn đăng xuất?
+            </Text>
 
-              <View style={styles.modalButtons}>
-                <TouchableOpacity
-                  onPress={() => setShowConfirm(false)}
-                  style={styles.btnCancel}
-                >
-                  <Text style={styles.textCancel}>Hủy</Text>
-                </TouchableOpacity>
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                onPress={() => setShowConfirm(false)}
+                style={[styles.modalBtn, styles.btnCancel]}
+              >
+                <Text style={styles.textCancel}>Hủy</Text>
+              </TouchableOpacity>
 
-                <TouchableOpacity
-                  onPress={confirmLogout}
-                  style={styles.btnLogout}
-                >
-                  <Text style={styles.textLogout}>Đăng xuất</Text>
-                </TouchableOpacity>
-              </View>
+              <TouchableOpacity
+                onPress={confirmLogout}
+                style={[styles.modalBtn, styles.btnLogout]}
+              >
+                <Text style={styles.textLogout}>Đăng xuất</Text>
+              </TouchableOpacity>
             </View>
           </View>
-        </Modal>
-      </View>
+        </View>
+      </Modal>
     </View>
   );
 }
 
+/* ===== STYLES ===== */
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f8f9fa" },
+  container: { flex: 1, backgroundColor: "#f5f5f5" },
+
+  /* HEADER */
   header: {
     alignItems: "center",
-    paddingVertical: 40,
-    backgroundColor: "#fff",
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
+    paddingVertical: 50,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 8,
   },
-  // Đã đổi tên từ username sang fullNameText
   fullNameText: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: "700",
-    marginTop: 10,
-    color: "#1a1a1a",
+    color: "#fff",
+    marginTop: 12,
   },
-  menu: { marginTop: 20, backgroundColor: "#fff" },
+
+  /* MENU */
+  menu: {
+    marginTop: 20,
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    marginHorizontal: 16,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 3,
+  },
   menuItem: {
     flexDirection: "row",
     alignItems: "center",
@@ -114,7 +138,22 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#eee",
   },
-  menuText: { fontSize: 16, marginLeft: 12, color: "#333" },
+  menuText: {
+    fontSize: 16,
+    marginLeft: 16,
+    color: "#333",
+    fontWeight: "600",
+  },
+  iconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "rgba(201,168,98,0.1)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  /* MODAL */
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.5)",
@@ -124,27 +163,46 @@ const styles = StyleSheet.create({
   modalBox: {
     width: "80%",
     backgroundColor: "#fff",
-    borderRadius: 16,
-    padding: 24,
+    borderRadius: 20,
+    padding: 28,
     elevation: 10,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
-    shadowRadius: 5,
+    shadowRadius: 8,
   },
   modalTitle: {
-    fontSize: 16,
-    marginBottom: 25,
+    fontSize: 18,
+    fontWeight: "600",
     textAlign: "center",
-    lineHeight: 22,
+    marginBottom: 24,
+    color: "#1A1A1A",
   },
   modalButtons: {
     flexDirection: "row",
-    justifyContent: "space-around",
+    justifyContent: "space-between",
+  },
+  modalBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 12,
     alignItems: "center",
   },
-  btnCancel: { padding: 10 },
-  textCancel: { color: "#666", fontSize: 16, fontWeight: "500" },
-  btnLogout: { padding: 10 },
-  textLogout: { color: "#FF3B30", fontSize: 16, fontWeight: "700" },
+  btnCancel: {
+    backgroundColor: "#f0f0f0",
+    marginRight: 12,
+  },
+  btnLogout: {
+    backgroundColor: "#FF3B30",
+  },
+  textCancel: {
+    color: "#333",
+    fontWeight: "600",
+    fontSize: 16,
+  },
+  textLogout: {
+    color: "#fff",
+    fontWeight: "700",
+    fontSize: 16,
+  },
 });

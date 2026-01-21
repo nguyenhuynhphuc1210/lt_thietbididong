@@ -2,6 +2,7 @@ import AppHeader from "@/components/AppHeader";
 import ProductCard from "@/components/ProductCard";
 import api from "@/constants/api";
 import { useCart } from "@/contexts/CartContext";
+import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
@@ -51,7 +52,7 @@ const banners = [
 ];
 
 export default function HomeScreen() {
-  const { addItem } = useCart(); // ⭐ realtime cart
+  const { addItem } = useCart();
   const [loading, setLoading] = useState(true);
 
   const [categories, setCategories] = useState<Category[]>([]);
@@ -61,7 +62,6 @@ export default function HomeScreen() {
   const [keyword, setKeyword] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [selectedBrand, setSelectedBrand] = useState<number | null>(null);
-  
 
   useEffect(() => {
     loadHome();
@@ -119,7 +119,7 @@ export default function HomeScreen() {
   if (loading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="#007AFF" />
+        <ActivityIndicator size="large" color="#C9A862" />
       </View>
     );
   }
@@ -131,42 +131,60 @@ export default function HomeScreen() {
         {/* HEADER */}
         <AppHeader />
 
-        {/* SEARCH */}
-        <View style={styles.searchBox}>
-          <TextInput
-            placeholder="Tìm kiếm đồng hồ..."
-            value={keyword}
-            onChangeText={setKeyword}
-            style={styles.searchInput}
+        {/* SEARCH BOX - Luxury Style */}
+        <View style={styles.searchWrapper}>
+          <View style={styles.searchBox}>
+            <Text style={styles.searchIcon}>🔍</Text>
+            <TextInput
+              placeholder="Tìm kiếm đồng hồ cao cấp..."
+              placeholderTextColor="#999"
+              value={keyword}
+              onChangeText={setKeyword}
+              style={styles.searchInput}
+            />
+          </View>
+        </View>
+
+        {/* BANNER CAROUSEL */}
+        <View style={styles.bannerSection}>
+          <FlatList
+            data={banners}
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            keyExtractor={(i) => i.id.toString()}
+            renderItem={({ item }) => (
+              <View style={styles.bannerWrapper}>
+                <Image
+                  source={item.image}
+                  style={styles.banner}
+                  resizeMode="cover"
+                />
+                <LinearGradient
+                  colors={["transparent", "rgba(0,0,0,0.4)"]}
+                  style={styles.bannerOverlay}
+                />
+              </View>
+            )}
           />
         </View>
 
-        {/* BANNER */}
-        <FlatList
-          data={banners}
-          horizontal
-          pagingEnabled
-          showsHorizontalScrollIndicator={false}
-          keyExtractor={(i) => i.id.toString()}
-          renderItem={({ item }) => (
-            <Image
-              source={item.image}
-              style={styles.banner}
-              resizeMode="cover"
-            />
-          )}
-        />
-
-        {/* CATEGORY */}
+        {/* CATEGORY SECTION */}
         <View style={styles.section}>
-          <Text style={styles.title}>Danh mục</Text>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Danh Mục</Text>
+            <View style={styles.divider} />
+          </View>
+          
           <FlatList
             horizontal
             data={categories}
             showsHorizontalScrollIndicator={false}
             keyExtractor={(i) => i.id.toString()}
+            contentContainerStyle={styles.categoryList}
             renderItem={({ item }) => (
               <TouchableOpacity
+                activeOpacity={0.7}
                 onPress={() =>
                   setSelectedCategory(
                     selectedCategory === item.id ? null : item.id
@@ -175,14 +193,14 @@ export default function HomeScreen() {
               >
                 <View
                   style={[
-                    styles.badge,
-                    selectedCategory === item.id && styles.badgeActive,
+                    styles.categoryChip,
+                    selectedCategory === item.id && styles.categoryActive,
                   ]}
                 >
                   <Text
                     style={[
-                      styles.badgeText,
-                      selectedCategory === item.id && styles.badgeTextActive,
+                      styles.categoryText,
+                      selectedCategory === item.id && styles.categoryTextActive,
                     ]}
                   >
                     {item.name}
@@ -193,16 +211,22 @@ export default function HomeScreen() {
           />
         </View>
 
-        {/* BRAND */}
+        {/* BRAND SECTION */}
         <View style={styles.section}>
-          <Text style={styles.title}>Thương hiệu</Text>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Thương Hiệu Nổi Bật</Text>
+            <View style={styles.divider} />
+          </View>
+          
           <FlatList
             horizontal
             data={brands}
             showsHorizontalScrollIndicator={false}
             keyExtractor={(i) => i.id.toString()}
+            contentContainerStyle={styles.brandList}
             renderItem={({ item }) => (
               <TouchableOpacity
+                activeOpacity={0.8}
                 onPress={() =>
                   setSelectedBrand(selectedBrand === item.id ? null : item.id)
                 }
@@ -210,13 +234,15 @@ export default function HomeScreen() {
                 <View
                   style={[
                     styles.brandCard,
-                    selectedBrand === item.id && styles.brandActive,
+                    selectedBrand === item.id && styles.brandCardActive,
                   ]}
                 >
-                  <Image
-                    source={{ uri: item.logoUrl }}
-                    style={styles.brandLogo}
-                  />
+                  <View style={styles.brandLogoWrapper}>
+                    <Image
+                      source={{ uri: item.logoUrl }}
+                      style={styles.brandLogo}
+                    />
+                  </View>
                   <Text numberOfLines={1} style={styles.brandName}>
                     {item.name}
                   </Text>
@@ -226,25 +252,38 @@ export default function HomeScreen() {
           />
         </View>
 
-        {/* PRODUCT */}
+        {/* PRODUCT SECTION */}
         <View style={styles.section}>
-          <Text style={styles.title}>Sản phẩm</Text>
-          <View style={styles.grid}>
-            {filteredProducts.map((p) => (
-              <ProductCard
-                key={p.id}
-                id={p.id}
-                name={p.name}
-                brandName={p.brandName}
-                price={p.price}
-                imageUrl={p.images[0]?.imageUrl}
-                onPress={() => router.push(`/product/${p.id}`)}
-                onAddToCart={() => handleAddToCart(p.id)}
-                onToggleWishlist={() => {}}
-              />
-            ))}
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Bộ Sưu Tập</Text>
+            <View style={styles.divider} />
           </View>
+          
+          {filteredProducts.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyText}>Không tìm thấy sản phẩm</Text>
+            </View>
+          ) : (
+            <View style={styles.grid}>
+              {filteredProducts.map((p) => (
+                <ProductCard
+                  key={p.id}
+                  id={p.id}
+                  name={p.name}
+                  brandName={p.brandName}
+                  price={p.price}
+                  imageUrl={p.images[0]?.imageUrl}
+                  onPress={() => router.push(`/product/${p.id}`)}
+                  onAddToCart={() => handleAddToCart(p.id)}
+                  onToggleWishlist={() => {}}
+                />
+              ))}
+            </View>
+          )}
         </View>
+
+        {/* BOTTOM SPACING */}
+        <View style={{ height: 30 }} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -252,59 +291,182 @@ export default function HomeScreen() {
 
 /* ================= STYLES ================= */
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f8f9fa" },
-  center: { flex: 1, justifyContent: "center", alignItems: "center" },
-
-  searchBox: { margin: 16 },
-  searchInput: {
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: "#e0e0e0",
+  container: { 
+    flex: 1, 
+    backgroundColor: "#F5F5F0" 
+  },
+  center: { 
+    flex: 1, 
+    justifyContent: "center", 
+    alignItems: "center",
+    backgroundColor: "#F5F5F0"
   },
 
-  banner: {
-    width: width - 32,
-    aspectRatio: 16 / 9,
+  /* SEARCH */
+  searchWrapper: {
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+  },
+  searchBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FFFFFF",
     borderRadius: 16,
-    marginHorizontal: 16,
-    marginTop: 10,
-  },
-
-  section: { marginTop: 20, paddingHorizontal: 16 },
-  title: { fontSize: 18, fontWeight: "700", marginBottom: 12 },
-
-  badge: {
     paddingHorizontal: 16,
-    paddingVertical: 8,
-    backgroundColor: "#fff",
-    borderRadius: 20,
-    marginRight: 10,
-    borderWidth: 1,
-    borderColor: "#ddd",
+    paddingVertical: 14,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
   },
-  badgeActive: { backgroundColor: "#007AFF", borderColor: "#007AFF" },
-  badgeText: { color: "#333" },
-  badgeTextActive: { color: "#fff", fontWeight: "600" },
+  searchIcon: {
+    fontSize: 18,
+    marginRight: 10,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 15,
+    color: "#1A1A1A",
+    fontWeight: "400",
+  },
 
+  /* BANNER */
+  bannerSection: {
+    marginTop: 8,
+    marginBottom: 20,
+  },
+  bannerWrapper: {
+    position: "relative",
+  },
+  banner: {
+    width: width - 40,
+    height: 180,
+    borderRadius: 20,
+    marginHorizontal: 20,
+  },
+  bannerOverlay: {
+    position: "absolute",
+    bottom: 0,
+    left: 20,
+    right: 20,
+    height: 80,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+  },
+
+  /* SECTION */
+  section: { 
+    marginTop: 24,
+    paddingHorizontal: 20,
+  },
+  sectionHeader: {
+    marginBottom: 16,
+  },
+  sectionTitle: { 
+    fontSize: 22, 
+    fontWeight: "700",
+    color: "#1A1A1A",
+    letterSpacing: 0.3,
+  },
+  divider: {
+    width: 40,
+    height: 3,
+    backgroundColor: "#C9A862",
+    marginTop: 8,
+    borderRadius: 2,
+  },
+
+  /* CATEGORY */
+  categoryList: {
+    paddingVertical: 4,
+  },
+  categoryChip: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 24,
+    marginRight: 12,
+    borderWidth: 1.5,
+    borderColor: "#E8E8E8",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  categoryActive: { 
+    backgroundColor: "#1A1A1A",
+    borderColor: "#1A1A1A",
+  },
+  categoryText: { 
+    color: "#4A4A4A",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  categoryTextActive: { 
+    color: "#FFFFFF",
+  },
+
+  /* BRAND */
+  brandList: {
+    paddingVertical: 4,
+  },
   brandCard: {
-    width: 110,
-    padding: 10,
+    width: 130,
+    padding: 16,
     marginRight: 16,
-    backgroundColor: "#fff",
-    borderRadius: 12,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#eee",
+    borderColor: "#E8E8E8",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  brandCardActive: { 
+    borderColor: "#C9A862",
+    borderWidth: 2,
+    backgroundColor: "#FFFEF8",
+  },
+  brandLogoWrapper: {
+    width: "100%",
+    height: 60,
+    justifyContent: "center",
     alignItems: "center",
   },
-  brandActive: { borderColor: "#007AFF" },
-  brandLogo: { width: 90, height: 50, resizeMode: "contain" },
-  brandName: { fontSize: 12, marginTop: 6 },
+  brandLogo: { 
+    width: "100%",
+    height: "100%",
+    resizeMode: "contain",
+  },
+  brandName: { 
+    fontSize: 13,
+    marginTop: 10,
+    color: "#2A2A2A",
+    fontWeight: "600",
+    textAlign: "center",
+  },
 
+  /* PRODUCT GRID */
   grid: {
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
+    marginTop: 8,
+  },
+
+  /* EMPTY STATE */
+  emptyState: {
+    paddingVertical: 40,
+    alignItems: "center",
+  },
+  emptyText: {
+    fontSize: 15,
+    color: "#999",
+    fontWeight: "500",
   },
 });
