@@ -1,44 +1,73 @@
-import { chatApi } from "@/services/chatService"; // chỉnh path theo project bạn
+import { chatApi } from "@/services/chatService";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
 import { useEffect, useRef, useState } from "react";
 import {
-    FlatList,
-    KeyboardAvoidingView,
-    Platform,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  FlatList,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
-// ================= TYPES =================
+/* ================= TYPES ================= */
 export type ChatMessage = {
   id: string;
   text: string;
   isUser: boolean;
 };
 
-// ================= COMPONENT =================
-export default function ChatBox() {
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: "welcome",
-      text: "Xin chào 👋 Tôi có thể hỗ trợ gì cho bạn?",
-      isUser: false,
-    },
-  ]);
+/* ================= CONSTANT ================= */
+const CHAT_STORAGE_KEY = "CHAT_MESSAGES";
+
+/* ================= COMPONENT ================= */
+export default function ChatBot() {
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
 
   const listRef = useRef<FlatList>(null);
 
-  // auto scroll khi có tin nhắn mới
+  /* ================= LOAD CHAT ================= */
+  useEffect(() => {
+    const loadChat = async () => {
+      try {
+        const saved = await AsyncStorage.getItem(CHAT_STORAGE_KEY);
+        if (saved) {
+          setMessages(JSON.parse(saved));
+        } else {
+          setMessages([
+            {
+              id: "welcome",
+              text: "Xin chào 👋 Tôi có thể hỗ trợ gì cho bạn?",
+              isUser: false,
+            },
+          ]);
+        }
+      } catch (err) {
+        console.log("Load chat error", err);
+      }
+    };
+
+    loadChat();
+  }, []);
+
+  /* ================= SAVE CHAT ================= */
+  useEffect(() => {
+    if (messages.length > 0) {
+      AsyncStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(messages));
+    }
+  }, [messages]);
+
+  /* ================= AUTO SCROLL ================= */
   useEffect(() => {
     listRef.current?.scrollToEnd({ animated: true });
   }, [messages]);
 
-  // ================= SEND MESSAGE =================
+  /* ================= SEND MESSAGE ================= */
   const sendMessage = async () => {
     if (!input.trim() || loading) return;
 
@@ -56,7 +85,6 @@ export default function ChatBox() {
 
     const typingId = "typing";
 
-    // bot typing
     setMessages((prev) => [
       ...prev,
       {
@@ -78,7 +106,7 @@ export default function ChatBox() {
             isUser: false,
           }),
       );
-    } catch (error) {
+    } catch (err) {
       setMessages((prev) =>
         prev
           .filter((m) => m.id !== typingId)
@@ -93,7 +121,7 @@ export default function ChatBox() {
     }
   };
 
-  // ================= RENDER MESSAGE =================
+  /* ================= RENDER MESSAGE ================= */
   const renderItem = ({ item }: { item: ChatMessage }) => {
     const isUser = item.isUser;
 
@@ -111,7 +139,7 @@ export default function ChatBox() {
     );
   };
 
-  // ================= UI =================
+  /* ================= UI ================= */
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -153,78 +181,65 @@ export default function ChatBox() {
   );
 }
 
-// ================= STYLES =================
+/* ================= STYLES ================= */
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#f5f5f5",
   },
-
   header: {
-    height: 48,
-    backgroundColor: "#ff5a5f",
-    justifyContent: "center",
-    paddingHorizontal: 16,
+    padding: 14,
+    backgroundColor: "#111",
   },
   headerTitle: {
     color: "#fff",
     fontSize: 16,
     fontWeight: "600",
+    textAlign: "center",
   },
-
   list: {
     padding: 12,
   },
-
   message: {
     maxWidth: "80%",
     padding: 10,
     borderRadius: 12,
     marginBottom: 8,
   },
-
   userMessage: {
-    backgroundColor: "#ff5a5f",
+    backgroundColor: "#111",
     alignSelf: "flex-end",
-    borderBottomRightRadius: 2,
   },
   botMessage: {
-    backgroundColor: "#ffffff",
+    backgroundColor: "#e0e0e0",
     alignSelf: "flex-start",
-    borderBottomLeftRadius: 2,
   },
-
   userText: {
     color: "#fff",
-    fontSize: 14,
   },
   botText: {
-    color: "#333",
-    fontSize: 14,
+    color: "#000",
   },
-
   inputRow: {
     flexDirection: "row",
-    padding: 8,
+    padding: 10,
+    borderTopWidth: 1,
+    borderColor: "#ddd",
     backgroundColor: "#fff",
-    alignItems: "flex-end",
   },
   input: {
     flex: 1,
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 16,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
     maxHeight: 100,
+    padding: 10,
+    borderRadius: 8,
+    backgroundColor: "#f2f2f2",
   },
   sendBtn: {
     marginLeft: 8,
-    backgroundColor: "#ff5a5f",
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: "center",
+    backgroundColor: "#111",
+    padding: 12,
+    borderRadius: 50,
     justifyContent: "center",
+    alignItems: "center",
   },
 });

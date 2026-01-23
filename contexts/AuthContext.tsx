@@ -21,6 +21,8 @@ type AuthContextType = {
   forgotPassword: (email: string) => Promise<any>;
   verifyOtp: (data: { email: string; otp: string }) => Promise<any>;
   resetPassword: (data: { email: string; newPassword: string }) => Promise<any>;
+
+  updateUser: (newUser: any) => void;
 };
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
@@ -78,6 +80,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return authService.resetPassword(data);
   };
 
+  const updateUser = (newUser: any) => {
+    setUser(newUser);
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -93,6 +99,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         forgotPassword,
         verifyOtp,
         resetPassword,
+        updateUser,
       }}
     >
       {children}

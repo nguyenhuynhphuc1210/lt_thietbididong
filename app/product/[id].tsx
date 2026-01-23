@@ -66,12 +66,17 @@ export default function ProductDetailScreen() {
   }, [id]);
 
   useEffect(() => {
-    // load reviews 👈 Ở ĐÂY
     if (!id) return;
 
     getReviewsByProduct(Number(id))
-      .then((res) => setReviews(res.data))
-      .catch(() => setReviews([]));
+      .then((res) => {
+        console.log("REVIEWS API:", res.data);
+        setReviews(res.data);
+      })
+      .catch((err) => {
+        console.log("ERROR:", err);
+        setReviews([]);
+      });
   }, [id]);
 
   const handleAddToCart = async () => {
@@ -275,9 +280,7 @@ export default function ProductDetailScreen() {
 
                   <Text style={styles.reviewComment}>{r.comment}</Text>
 
-                  <Text style={styles.reviewDate}>
-                    {new Date(r.createdAt).toLocaleDateString("vi-VN")}
-                  </Text>
+                  <Text style={styles.reviewDate}>{r.createdAt}</Text>
                 </View>
               ))
             )}

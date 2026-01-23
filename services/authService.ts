@@ -1,6 +1,8 @@
 import api from "@/constants/api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
+const CHAT_STORAGE_KEY = "CHAT_MESSAGES";
+
 export const authService = {
   login: async (email: string, password: string) => {
     const res = await api.post("/auth/login", { email, password });
@@ -42,6 +44,6 @@ export const authService = {
   },
 
   logout: async () => {
-    await AsyncStorage.multiRemove(["token", "user"]);
+    await AsyncStorage.multiRemove(["token", "user", CHAT_STORAGE_KEY]);
   },
 };

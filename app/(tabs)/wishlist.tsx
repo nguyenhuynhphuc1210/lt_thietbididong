@@ -5,6 +5,7 @@ import { useWishlist } from "@/contexts/WishlistContext";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 
 export default function WishlistScreen() {
@@ -31,42 +32,47 @@ export default function WishlistScreen() {
   /* ===== empty ===== */
   if (wishlist.length === 0) {
     return (
-      <View style={styles.center}>
+      <SafeAreaView style={styles.center} edges={["top"]}>
         <Text>Bạn chưa có sản phẩm yêu thích ❤️</Text>
-      </View>
+      </SafeAreaView>
     );
   }
 
   /* ===== UI ===== */
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.title}>Yêu thích</Text>
+    <SafeAreaView style={styles.container} edges={["top"]}>
+      <ScrollView>
+        <Text style={styles.title}>Yêu thích</Text>
 
-      <View style={styles.grid}>
-        {products.map((p) => (
-          <ProductCard
-            key={p.id}
-            id={p.id}
-            name={p.name}
-            price={p.price}
-            brandName={p.brandName}
-            imageUrl={p.images[0]?.imageUrl}
-            onPress={() => router.push(`/product/${p.id}`)}
-            onAddToCart={async () => {
-              try {
-                await addItem(p.id, 1);
-                Toast.show({ type: "success", text1: "Đã thêm vào giỏ hàng" });
-              } catch (e: any) {
-                Toast.show({
-                  type: "error",
-                  text1: e?.message || "Bạn cần đăng nhập",
-                });
-              }
-            }}
-          />
-        ))}
-      </View>
-    </ScrollView>
+        <View style={styles.grid}>
+          {products.map((p) => (
+            <ProductCard
+              key={p.id}
+              id={p.id}
+              name={p.name}
+              price={p.price}
+              brandName={p.brandName}
+              imageUrl={p.images[0]?.imageUrl}
+              onPress={() => router.push(`/product/${p.id}`)}
+              onAddToCart={async () => {
+                try {
+                  await addItem(p.id, 1);
+                  Toast.show({
+                    type: "success",
+                    text1: "Đã thêm vào giỏ hàng",
+                  });
+                } catch (e: any) {
+                  Toast.show({
+                    type: "error",
+                    text1: e?.message || "Bạn cần đăng nhập",
+                  });
+                }
+              }}
+            />
+          ))}
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 

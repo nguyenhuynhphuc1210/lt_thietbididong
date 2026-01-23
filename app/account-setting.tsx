@@ -1,6 +1,6 @@
 import api from "@/constants/api";
+import { useAuth } from "@/contexts/AuthContext";
 import { Ionicons } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
@@ -13,54 +13,47 @@ import {
 } from "react-native";
 
 export default function AccountSettingScreen() {
+  const { user, updateUser } = useAuth();
+
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   const [message, setMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const [loading, setLoading] = useState(false);
 
+  /* ===== init data ===== */
   useEffect(() => {
-    const loadUser = async () => {
-      const userStr = await AsyncStorage.getItem("user");
-      if (!userStr) return;
+    if (!user) return;
 
-      const data = JSON.parse(userStr);
+    setFullName(user.fullName || "");
+    setPhone(user.phone || "");
+  }, [user]);
 
-      setFullName(data.fullName);
-      setPhone(data.phone || "");
-      setEmail(data.email);
-    };
-
-    loadUser();
-  }, []);
-
+  /* ===== save ===== */
   const handleSave = async () => {
     try {
+      setLoading(true);
       setMessage("");
       setErrorMessage("");
 
-      await api.put("/users/me", {
+      const res = await api.put("/users/me", {
         fullName,
         phone,
         password: password || undefined,
       });
 
-      // update local storage
-      const userStr = await AsyncStorage.getItem("user");
-      if (userStr) {
-        const data = JSON.parse(userStr);
-        data.fullName = fullName;
-        data.phone = phone;
-        await AsyncStorage.setItem("user", JSON.stringify(data));
-      }
+      // 🔥 update context → UserScreen re-render liền
+      updateUser(res.data);
 
       setPassword("");
       setMessage("✔ Cập nhật tài khoản thành công");
-    } catch (error) {
-      console.log(error);
+    } catch (e) {
+      console.log(e);
       setErrorMessage("❌ Không thể cập nhật tài khoản");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -71,7 +64,9 @@ export default function AccountSettingScreen() {
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={20} color="#fff" />
         </TouchableOpacity>
+
         <Text style={styles.headerTitle}>Cài đặt tài khoản</Text>
+
         <View style={{ width: 36 }} />
       </LinearGradient>
 
@@ -97,7 +92,7 @@ export default function AccountSettingScreen() {
         <Text style={styles.label}>Email (không thể thay đổi)</Text>
         <TextInput
           style={styles.inputDisabled}
-          value={email}
+          value={user?.email || ""}
           editable={false}
         />
 
@@ -110,26 +105,24 @@ export default function AccountSettingScreen() {
           placeholder="Để trống nếu không đổi"
         />
 
-        <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
+        <TouchableOpacity
+          style={[styles.saveBtn, loading && { opacity: 0.6 }]}
+          onPress={handleSave}
+          disabled={loading}
+        >
           <LinearGradient
             colors={["#C9A862", "#A68B4D"]}
             style={styles.saveBtnGradient}
           >
-            <Text style={styles.saveBtnText}>Lưu thay đổi</Text>
+            <Text style={styles.saveBtnText}>
+              {loading ? "Đang lưu..." : "Lưu thay đổi"}
+            </Text>
           </LinearGradient>
         </TouchableOpacity>
 
-        {message !== "" && (
-          <Text style={styles.success}>
-            <Ionicons name="checkmark-circle-outline" size={16} color="green" />{" "}
-            {message}
-          </Text>
-        )}
+        {message !== "" && <Text style={styles.success}>{message}</Text>}
         {errorMessage !== "" && (
-          <Text style={styles.error}>
-            <Ionicons name="alert-circle-outline" size={16} color="red" />{" "}
-            {errorMessage}
-          </Text>
+          <Text style={styles.error}>{errorMessage}</Text>
         )}
       </View>
     </View>

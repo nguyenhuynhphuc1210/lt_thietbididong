@@ -12,6 +12,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 
 type PaymentMethod = "COD" | "VNPAY";
@@ -25,7 +26,6 @@ export default function PaymentScreen() {
   const [method, setMethod] = useState<PaymentMethod>("COD");
   const [loading, setLoading] = useState(false);
 
-  /** 👉 CHỈ LẤY ITEM ĐƯỢC CHỌN */
   const selectedItems = useMemo(() => items.filter((i) => i.selected), [items]);
 
   const submit = async () => {
@@ -62,7 +62,6 @@ export default function PaymentScreen() {
 
       const res = await checkout(payload);
 
-      /* ================= COD ================= */
       if (method === "COD") {
         clearSelected();
 
@@ -79,10 +78,8 @@ export default function PaymentScreen() {
         return;
       }
 
-      /* ================= VNPAY ================= */
       if (method === "VNPAY" && res.paymentUrl) {
         await Linking.openURL(res.paymentUrl);
-        return;
       }
     } catch (e) {
       console.log("❌ CHECKOUT ERROR =", e);
@@ -97,65 +94,70 @@ export default function PaymentScreen() {
   };
 
   return (
-    <ScrollView style={styles.container}>
-      {/* HEADER */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={26} color="#000" />
+    <SafeAreaView style={styles.container} edges={["top"]}>
+      <ScrollView>
+        {/* HEADER */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()}>
+            <Ionicons name="arrow-back" size={26} color="#000" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Thanh toán</Text>
+        </View>
+
+        {/* ADDRESS */}
+        <Text style={styles.label}>Địa chỉ giao hàng</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Nhập địa chỉ"
+          value={address}
+          onChangeText={setAddress}
+        />
+
+        {/* NOTE */}
+        <Text style={styles.label}>Ghi chú</Text>
+        <TextInput
+          style={[styles.input, { height: 80 }]}
+          placeholder="Ghi chú cho shop (không bắt buộc)"
+          value={note}
+          onChangeText={setNote}
+          multiline
+        />
+
+        {/* PAYMENT METHOD */}
+        <Text style={styles.label}>Phương thức thanh toán</Text>
+
+        <TouchableOpacity style={styles.radio} onPress={() => setMethod("COD")}>
+          <View style={[styles.dot, method === "COD" && styles.active]} />
+          <Text>Thanh toán khi nhận hàng (COD)</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Thanh toán</Text>
-      </View>
 
-      {/* ADDRESS */}
-      <Text style={styles.label}>Địa chỉ giao hàng</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Nhập địa chỉ"
-        value={address}
-        onChangeText={setAddress}
-      />
+        <TouchableOpacity
+          style={styles.radio}
+          onPress={() => setMethod("VNPAY")}
+        >
+          <View style={[styles.dot, method === "VNPAY" && styles.active]} />
+          <Text>Thanh toán VNPAY</Text>
+        </TouchableOpacity>
 
-      {/* NOTE */}
-      <Text style={styles.label}>Ghi chú</Text>
-      <TextInput
-        style={[styles.input, { height: 80 }]}
-        placeholder="Ghi chú cho shop (không bắt buộc)"
-        value={note}
-        onChangeText={setNote}
-        multiline
-      />
+        {/* TOTAL */}
+        <View style={styles.totalBox}>
+          <Text style={styles.totalText}>
+            Tổng tiền: {totalSelected.toLocaleString()} ₫
+          </Text>
+        </View>
 
-      {/* PAYMENT METHOD */}
-      <Text style={styles.label}>Phương thức thanh toán</Text>
-
-      <TouchableOpacity style={styles.radio} onPress={() => setMethod("COD")}>
-        <View style={[styles.dot, method === "COD" && styles.active]} />
-        <Text>Thanh toán khi nhận hàng (COD)</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.radio} onPress={() => setMethod("VNPAY")}>
-        <View style={[styles.dot, method === "VNPAY" && styles.active]} />
-        <Text>Thanh toán VNPAY</Text>
-      </TouchableOpacity>
-
-      {/* TOTAL */}
-      <View style={styles.totalBox}>
-        <Text style={styles.totalText}>
-          Tổng tiền: {totalSelected.toLocaleString()} ₫
-        </Text>
-      </View>
-
-      {/* SUBMIT */}
-      <TouchableOpacity
-        style={[styles.btn, loading && { opacity: 0.6 }]}
-        onPress={submit}
-        disabled={loading}
-      >
-        <Text style={styles.btnText}>
-          {loading ? "Đang xử lý..." : "Xác nhận thanh toán"}
-        </Text>
-      </TouchableOpacity>
-    </ScrollView>
+        {/* SUBMIT */}
+        <TouchableOpacity
+          style={[styles.btn, loading && { opacity: 0.6 }]}
+          onPress={submit}
+          disabled={loading}
+        >
+          <Text style={styles.btnText}>
+            {loading ? "Đang xử lý..." : "Xác nhận thanh toán"}
+          </Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
