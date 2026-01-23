@@ -1,138 +1,50 @@
-Watch App – Ứng dụng bán đồng hồ (Đồ án)
+# Welcome to your Expo app 👋
 
-Đây là đồ án môn học xây dựng ứng dụng bán đồng hồ trên nền tảng Mobile sử dụng Expo (React Native) kết hợp Backend Spring Boot.
+This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
 
-Ứng dụng hỗ trợ:
+## Get started
 
-Đăng ký / đăng nhập
+1. Install dependencies
 
-Quên mật khẩu bằng OTP gửi qua Email
+   ```bash
+   npm install
+   ```
 
-Xác thực người dùng bằng JWT
+2. Start the app
 
-Quản lý và hiển thị sản phẩm
+   ```bash
+   npx expo start
+   ```
 
-Upload hình ảnh bằng Cloudinary
+In the output, you'll find options to open the app in a
 
-🚀 Get started (Mobile App)
-1. Cài đặt dependencies
-npm install
+- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
+- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
+- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
+- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
 
-2. Chạy ứng dụng
-npx expo start
+You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
 
+## Get a fresh project
 
-Sau khi chạy, bạn có thể mở ứng dụng bằng:
+When you're ready, run:
 
-Expo Go
+```bash
+npm run reset-project
+```
 
-Android Emulator
+This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
 
-iOS Simulator
+## Learn more
 
-Web preview
+To learn more about developing your project with Expo, look at the following resources:
 
-Ứng dụng sử dụng file-based routing của Expo Router.
-Bạn có thể bắt đầu phát triển bằng cách chỉnh sửa các file trong thư mục app.
+- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
+- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
 
-📂 Project structure
-app/
- ├── (auth)/
- │   ├── login.tsx
- │   ├── register.tsx
- │   ├── forgot-password.tsx
- │   └── verify-otp.tsx
- ├── (tabs)/
- │   └── home.tsx
- └── _layout.tsx
+## Join the community
 
-🔐 Authentication & Security
+Join our community of developers creating universal apps.
 
-Xác thực bằng JWT
-
-Quên mật khẩu bằng OTP (6 chữ số)
-
-OTP có thời hạn 5 phút, chỉ sử dụng 1 lần
-
-Mật khẩu được mã hóa bằng BCrypt
-
-JWT secret và API key được lưu bằng biến môi trường (.env)
-
-⚙️ Environment Variables
-Frontend (.env)
-EXPO_PUBLIC_API_URL=http://localhost:8080/api
-
-Backend (.env)
-JWT_SECRET=your_jwt_secret_key
-JWT_EXPIRATION=86400000
-
-CLOUDINARY_CLOUD_NAME=your_cloud_name
-CLOUDINARY_API_KEY=your_api_key
-CLOUDINARY_API_SECRET=your_api_secret
-
-MAIL_USERNAME=your_email@gmail.com
-MAIL_PASSWORD=your_gmail_app_password
-
-
-⚠️ Không commit file .env lên GitHub
-
-📡 Backend API
-Login
-POST /api/auth/login
-
-Forgot Password (OTP)
-POST /api/auth/forgot-password
-
-Reset Password with OTP
-POST /api/auth/reset-password-otp
-
-🛠️ Công nghệ sử dụng
-Mobile App
-
-Expo (React Native)
-
-Expo Router
-
-Axios
-
-React Hook Form + Zod
-
-AsyncStorage
-
-Backend
-
-Spring Boot
-
-Spring Security
-
-JWT
-
-JPA / Hibernate
-
-MySQL
-
-JavaMailSender (Gmail SMTP)
-
-Cloudinary
-
-🧪 Learn more
-
-Để tìm hiểu thêm về Expo và React Native:
-
-Expo documentation
-
-Expo Router
-
-React Native
-
-🎯 Kết quả đạt được
-
-Xây dựng thành công ứng dụng mobile bán đồng hồ
-
-Hoàn thiện hệ thống backend REST API
-
-Áp dụng xác thực JWT và OTP Email
-
-Giao diện thân thiện, dễ sử dụng
-
-Áp dụng kiến thức đã học vào thực tế
+- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
+- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions. viết theo dạng này để bỏ vào luôn 
