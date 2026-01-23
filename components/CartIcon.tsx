@@ -4,17 +4,15 @@ import { router } from "expo-router";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 export default function CartIcon() {
-  const { cartCount } = useCart();
+  const { count } = useCart();
 
   return (
     <TouchableOpacity onPress={() => router.push("/cart")}>
       <Ionicons name="cart-outline" size={24} color="#111" />
 
-      {cartCount > 0 && (
+      {count > 0 && (
         <View style={styles.badge}>
-          <Text style={styles.badgeText}>
-            {cartCount > 9 ? "9+" : cartCount}
-          </Text>
+          <Text style={styles.badgeText}>{count > 9 ? "9+" : count}</Text>
         </View>
       )}
     </TouchableOpacity>
