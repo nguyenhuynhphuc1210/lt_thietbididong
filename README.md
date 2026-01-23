@@ -1,239 +1,193 @@
-# MyApp - E-Commerce Mobile Application
+# Watch Store - Mobile E-commerce Application ⌚🛍️
 
-Ứng dụng mua sắm di động được xây dựng với [Expo](https://expo.dev) và React Native. Ứng dụng cung cấp trải nghiệm mua sắm liền mạch với nhiều tính năng nâng cao.
+Một ứng dụng di động e-commerce hiện đại để bán đồng hồ, được xây dựng bằng **Expo** và **React Native** với **TypeScript** ở phía frontend. Backend được phát triển bằng **Java** với **Spring Boot** framework. Ứng dụng cung cấp trải nghiệm mua sắm trực tuyến toàn diện với các tính năng như giỏ hàng, quản lý đơn hàng, danh sách yêu thích, và hỗ trợ chat trực tiếp.
 
-## 📋 Mục Lục
-- [Tính Năng](#tính-năng)
-- [Yêu Cầu Hệ Thống](#yêu-cầu-hệ-thống)
-- [Cài Đặt](#cài-đặt)
-- [Cấu Trúc Dự Án](#cấu-trúc-dự-án)
-- [Công Nghệ Sử Dụng](#công-nghệ-sử-dụng)
-- [Hướng Dẫn Sử Dụng](#hướng-dẫn-sử-dụng)
-- [Đóng Góp](#đóng-góp)
+## 🚀 Tính Năng Chính
 
-## ✨ Tính Năng
-
-### Xác Thực & Tài Khoản
-- Đăng ký tài khoản mới
-- Đăng nhập với email/mật khẩu
-- Quên mật khẩu / Đặt lại mật khẩu
-- Xác minh OTP
-- Quản lý cài đặt tài khoản
-
-### Mua Sắm
-- Duyệt danh sách sản phẩm
-- Xem chi tiết sản phẩm
-- Tìm kiếm và lọc sản phẩm
-- Giỏ hàng (thêm/xóa/cập nhật số lượng)
-- Danh sách yêu thích
-
-### Thanh Toán & Đơn Hàng
-- Quy trình thanh toán an toàn
-- Xem lịch sử đơn hàng
-- Theo dõi trạng thái đơn hàng
-- Xem chi tiết từng đơn hàng
-
-### Tương Tác
-- Viết và đọc đánh giá sản phẩm
-- Chat trực tiếp (FloatingChat)
-- Hỗ trợ khách hàng 24/7
-
-## 💻 Yêu Cầu Hệ Thống
-
-- **Node.js**: v18 hoặc cao hơn
-- **npm** hoặc **yarn**
-- **Expo CLI**: `npm install -g expo-cli`
-- **Android Studio** (cho phát triển Android) hoặc **Xcode** (cho phát triển iOS)
-
-## 🚀 Cài Đặt
-
-### 1. Clone Dự Án
-```bash
-git clone <repository-url>
-cd MyApp
-```
-
-### 2. Cài Đặt Dependencies
-```bash
-npm install
-```
-
-### 3. Khởi Động Ứng Dụng
-```bash
-npm start
-# hoặc
-npx expo start
-```
-
-### 4. Chạy Trên Các Nền Tảng Khác Nhau
-
-**Android:**
-```bash
-npm run android
-```
-
-**iOS:**
-```bash
-npm run ios
-```
-
-**Web:**
-```bash
-npm run web
-```
-
-**Expo Go:**
-```bash
-npx expo start
-# Quét mã QR bằng Expo Go trên điện thoại
-```
+- 🔐 **Xác thực & Bảo mật**: Đăng nhập, đăng ký, quên mật khẩu, xác minh OTP
+- 🛒 **Quản lý Giỏ Hàng**: Thêm/xóa sản phẩm, cập nhật số lượng
+- 📦 **Quản lý Đơn Hàng**: Xem danh sách đơn hàng, chi tiết đơn hàng, trạng thái đơn
+- ❤️ **Danh Sách Yêu Thích**: Lưu sản phẩm yêu thích
+- 💳 **Thanh Toán**: Tích hợp quy trình thanh toán an toàn
+- 💬 **Chat Hỗ Trợ**: Hỗ trợ khách hàng thông qua chat trực tiếp
+- ⭐ **Đánh Giá & Bình Luận**: Người dùng có thể đánh giá sản phẩm
+- 👤 **Quản lý Tài Khoản**: Cài đặt tài khoản, thông tin cá nhân
 
 ## 📁 Cấu Trúc Dự Án
 
 ```
 MyApp/
-├── app/                          # Màn hình chính (sử dụng Expo Router)
-│   ├── _layout.tsx              # Layout chính
-│   ├── (auth)/                  # Nhóm routes xác thực
+├── app/                        # Các trang ứng dụng (Expo Router)
+│   ├── (auth)/                 # Các màn hình xác thực
 │   │   ├── login.tsx
 │   │   ├── register.tsx
 │   │   ├── forgot-password.tsx
 │   │   └── verify-otp.tsx
-│   ├── (tabs)/                  # Nhóm tabs chính
-│   │   ├── home.tsx
-│   │   ├── cart.tsx
-│   │   ├── orders.tsx
-│   │   ├── wishlist.tsx
-│   │   └── user.tsx
-│   ├── product/                 # Chi tiết sản phẩm
-│   ├── orders/                  # Chi tiết đơn hàng
-│   └── payment.tsx              # Quy trình thanh toán
-├── components/                  # Các component tái sử dụng
-│   ├── AppHeader.tsx
+│   ├── (tabs)/                 # Các tab chính
+│   │   ├── home.tsx            # Trang chủ
+│   │   ├── cart.tsx            # Giỏ hàng
+│   │   ├── orders.tsx          # Đơn hàng
+│   │   ├── wishlist.tsx        # Danh sách yêu thích
+│   │   └── user.tsx            # Tài khoản người dùng
+│   ├── product/[id].tsx        # Chi tiết sản phẩm
+│   ├── orders/[orderCode].tsx  # Chi tiết đơn hàng
+│   └── ...
+├── components/                 # Các component tái sử dụng
 │   ├── ProductCard.tsx
 │   ├── CartIcon.tsx
+│   ├── AppHeader.tsx
 │   ├── ChatBox.tsx
-│   └── ui/                      # UI components
-├── services/                    # API services
+│   └── ui/                     # UI components
+├── services/                   # API services
 │   ├── authService.ts
 │   ├── cartService.ts
 │   ├── orderService.ts
 │   ├── checkoutService.ts
 │   ├── reviewService.ts
 │   └── chatService.ts
-├── contexts/                    # React Contexts
+├── contexts/                   # React Context API
 │   ├── AuthContext.tsx
 │   ├── CartContext.tsx
 │   └── WishlistContext.tsx
-├── constants/                   # Hằng số
-│   ├── api.ts
-│   ├── theme.ts
-│   └── orderStatus.ts
-├── hooks/                       # Custom hooks
-│   ├── use-color-scheme.ts
-│   └── use-theme-color.ts
-├── assets/                      # Hình ảnh và tài nguyên
-│   └── images/
-├── package.json
-├── app.json
-├── tsconfig.json
-└── README.md
+├── hooks/                      # Custom hooks
+├── constants/                  # Hằng số và cấu hình
+├── assets/                     # Hình ảnh và tài nguyên
+└── package.json
 ```
 
 ## 🛠️ Công Nghệ Sử Dụng
 
-### Framework & Library
-- **React Native** - Framework phát triển ứng dụng di động
-- **Expo** - Nền tảng xây dựng ứng dụng React Native
-- **Expo Router** - Định tuyến file-based cho React Native
-- **TypeScript** - Ngôn ngữ lập trình có kiểu tĩnh
+### Frontend (Mobile)
 
-### State Management & Form
-- **React Context API** - Quản lý trạng thái toàn cục
-- **React Hook Form** - Quản lý form hiệu quả
-- **Zod** - Xác thực schema
+- **React Native** - Framework phát triển ứng dụng mobile
+- **Expo** - Nền tảng phát triển React Native
+- **TypeScript** - Ngôn ngữ lập trình được gõ tĩnh
+- **Expo Router** - Định tuyến dựa trên tệp
+- **React Context API** - Quản lý trạng thái ứng dụng
+- **ESLint** - Kiểm tra chất lượng mã
 
-### UI & Navigation
-- **React Navigation** - Thư viện điều hướng
-- **@expo/vector-icons** - Icon SVG
-- **React Native Reanimated** - Hoạt ảnh hiệu suất cao
+### Backend (Server)
 
-### HTTP & Async Storage
-- **Axios** - HTTP client
-- **AsyncStorage** - Lưu trữ cục bộ
+- **Java** - Ngôn ngữ lập trình
+- **Spring Boot** - Framework ứng dụng Java
+- **Spring MVC** - Xây dựng RESTful API
+- **Spring Data JPA** - Truy cập cơ sở dữ liệu
+- **Spring Security** - Xác thực & phân quyền
+- **MySQL** - Cơ sở dữ liệu quan hệ
 
-### Các Thư Viện Khác
-- **React Native Toast Message** - Thông báo
-- **React Native Gesture Handler** - Xử lý cử chỉ
-- **React Native WebView** - Hiển thị web content
-- **Google Places Autocomplete** - Tự động hoàn thành địa chỉ
+## 📋 Yêu Cầu Hệ Thống
 
-## 📖 Hướng Dẫn Sử Dụng
+- Node.js (v14 hoặc cao hơn)
+- npm hoặc yarn
+- Expo CLI
+- iOS Simulator hoặc Android Emulator (hoặc Expo Go app)
 
-### Phát Triển
+## 🚀 Hướng Dẫn Cài Đặt
+
+### 1. Clone dự án
+
 ```bash
-# Khởi động dev server
-npm start
+git clone <repository-url>
+cd MyApp
+```
 
-# Lint code
-npm run lint
+### 2. Cài đặt dependencies
 
-# Reset dự án (xóa tất cả thay đổi)
+```bash
+npm install
+```
+
+### 3. Khởi chạy ứng dụng
+
+```bash
+npx expo start
+```
+
+Sau khi chạy lệnh trên, bạn sẽ thấy các tùy chọn để mở ứng dụng:
+
+- **i** - Mở trên iOS Simulator
+- **a** - Mở trên Android Emulator
+- **w** - Mở trên Web
+- **j** - Mở Expo DevTools
+- **r** - Tải lại ứng dụng
+- **Ctrl+C** - Dừng server
+
+## 📱 Phát Triển
+
+### Cấu Trúc Tệp
+
+Dự án sử dụng **Expo Router** cho định tuyến dựa trên tệp. Các tệp `.tsx` trong thư mục `app/` tự động trở thành các tuyến đường:
+
+- `app/index.tsx` → Trang chủ
+- `app/(auth)/login.tsx` → Đăng nhập
+- `app/(tabs)/home.tsx` → Tab Trang chủ
+- `app/product/[id].tsx` → Chi tiết sản phẩm (với ID động)
+
+### Chỉnh Sửa Mã
+
+Bạn có thể bắt đầu chỉnh sửa các tệp trong thư mục `app/`. Ứng dụng sẽ tự động tải lại khi bạn lưu các thay đổi.
+
+### Hot Reload
+
+Nhấn **r** trong terminal để tải lại ứng dụng khi bạn thay đổi mã.
+
+## 🧹 Reset Dự Án (Tuỳ Chọn)
+
+Để reset dự án về trạng thái ban đầu:
+
+```bash
 npm run reset-project
 ```
 
-### Xây Dựng
-```bash
-# Build cho Android
-expo build:android
+Lệnh này sẽ di chuyển mã khởi động đến thư mục `app-example` và tạo một thư mục `app` trống.
 
-# Build cho iOS
-expo build:ios
+## 🔗 API Integration
 
-# Build cho Web
-npm run web
+Ứng dụng tích hợp với API backend Spring Boot thông qua các service trong thư mục `services/`:
+
+- **authService.ts** - Quản lý xác thực người dùng (Đăng nhập, Đăng ký, Token refresh)
+- **cartService.ts** - Quản lý giỏ hàng (thêm, xóa, cập nhật sản phẩm)
+- **orderService.ts** - Quản lý đơn hàng (Lấy danh sách, chi tiết đơn hàng)
+- **checkoutService.ts** - Xử lý quy trình thanh toán
+- **reviewService.ts** - Quản lý đánh giá sản phẩm
+- **chatService.ts** - Hỗ trợ khách hàng qua chat
+
+### Backend Endpoints Chính
+
+Cấu hình URL API trong file `constants/api.ts`:
+
+```
+Base URL: http://your-backend-server:port/api
+
+Ví dụ endpoints:
+- POST   /api/auth/login           - Đăng nhập
+- POST   /api/auth/register        - Đăng ký
+- GET    /api/products             - Danh sách sản phẩm đồng hồ
+- GET    /api/products/{id}        - Chi tiết sản phẩm
+- POST   /api/cart                 - Thêm vào giỏ hàng
+- GET    /api/orders               - Danh sách đơn hàng
+- POST   /api/orders               - Tạo đơn hàng mới
+- POST   /api/reviews              - Gửi đánh giá sản phẩm
 ```
 
-## 📝 Hướng Dẫn Phát Triển
+## 📚 Tài Liệu Tham Khảo
 
-### Thêm Trang Mới
-1. Tạo file `.tsx` trong thư mục `app/`
-2. Sử dụng Expo Router để điều hướng tự động
+- [Expo Documentation](https://docs.expo.dev/)
+- [React Native Documentation](https://reactnative.dev/)
+- [Expo Router Guide](https://docs.expo.dev/router/introduction/)
+- [TypeScript Handbook](https://www.typescriptlang.org/docs/)
+- [Spring Boot Documentation](https://spring.io/projects/spring-boot)
+- [Spring Data JPA Guide](https://spring.io/projects/spring-data-jpa)
+- [RESTful API Best Practices](https://restfulapi.net/)
 
-### Thêm Component Mới
-1. Tạo file trong `components/`
-2. Export component và sử dụng ở các màn hình
+## 👥 Đóng Góp
 
-### Tạo Service Mới
-1. Tạo file trong `services/`
-2. Sử dụng axios để gọi API
-3. Xử lý lỗi và response
+Hãy fork dự án, tạo branch cho tính năng của bạn, và gửi pull request.
 
-### Thêm Context Mới
-1. Tạo file trong `contexts/`
-2. Wrap ứng dụng với provider
-3. Sử dụng custom hook để truy cập context
-
-## 🤝 Đóng Góp
-
-Chúng tôi hoan nghênh các đóng góp! Vui lòng:
-1. Fork dự án
-2. Tạo branch cho feature (`git checkout -b feature/AmazingFeature`)
-3. Commit thay đổi (`git commit -m 'Add some AmazingFeature'`)
-4. Push to branch (`git push origin feature/AmazingFeature`)
-5. Mở Pull Request
-
-## 📞 Liên Hệ & Hỗ Trợ
-
-Nếu bạn có câu hỏi hoặc cần hỗ trợ, vui lòng liên hệ:
-- Email: support@myapp.com
-- Chat: Sử dụng tính năng FloatingChat trong ứng dụng
-
-## 📄 Giấy Phép
+## 📝 License
 
 Dự án này được cấp phép dưới [MIT License](LICENSE).
 
----
+## 💬 Hỗ Trợ
 
-**Phiên bản:** 1.0.0  
-**Cập nhật lần cuối:** Tháng 1 năm 2026
+Nếu bạn gặp bất kỳ vấn đề nào, vui lòng tạo một issue hoặc liên hệ với đội hỗ trợ.
