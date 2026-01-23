@@ -1,4 +1,4 @@
-import { verifyOtp } from "@/hooks/useAuth";
+import { useAuth } from "@/contexts/AuthContext";
 import { Ionicons } from "@expo/vector-icons";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { LinearGradient } from "expo-linear-gradient";
@@ -26,10 +26,15 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>;
 
 export default function VerifyOtpScreen() {
+  const { verifyOtp } = useAuth();
   const { email } = useLocalSearchParams<{ email: string }>();
   const [loading, setLoading] = useState(false);
 
-  const { control, handleSubmit, formState: { errors } } = useForm<FormData>({
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: { otp: "" },
   });
@@ -53,12 +58,12 @@ export default function VerifyOtpScreen() {
         pathname: "/(auth)/reset-password",
         params: { email },
       });
-
     } catch (err: any) {
       Toast.show({
         type: "error",
         text1: "Lỗi",
-        text2: err.response?.data?.message || "OTP không hợp lệ hoặc đã hết hạn",
+        text2:
+          err.response?.data?.message || "OTP không hợp lệ hoặc đã hết hạn",
       });
     } finally {
       setLoading(false);
@@ -70,10 +75,7 @@ export default function VerifyOtpScreen() {
       style={styles.container}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
-      <LinearGradient
-        colors={["#F5F5F0", "#FFFFFF"]}
-        style={styles.gradient}
-      >
+      <LinearGradient colors={["#F5F5F0", "#FFFFFF"]} style={styles.gradient}>
         <View style={styles.content}>
           {/* LOGO & HEADER */}
           <View style={styles.header}>
@@ -91,11 +93,9 @@ export default function VerifyOtpScreen() {
 
             <Text style={styles.brandName}>LUXURY WATCH</Text>
             <View style={styles.brandLine} />
-            
+
             <Text style={styles.title}>Xác Thực OTP</Text>
-            <Text style={styles.subtitle}>
-              Mã xác thực đã được gửi đến
-            </Text>
+            <Text style={styles.subtitle}>Mã xác thực đã được gửi đến</Text>
             <Text style={styles.emailText}>{email}</Text>
           </View>
 
@@ -109,10 +109,10 @@ export default function VerifyOtpScreen() {
                 name="otp"
                 render={({ field: { onChange, value } }) => (
                   <View style={styles.otpWrapper}>
-                    <Ionicons 
-                      name="keypad-outline" 
-                      size={20} 
-                      color="#C9A862" 
+                    <Ionicons
+                      name="keypad-outline"
+                      size={20}
+                      color="#C9A862"
                       style={styles.otpIcon}
                     />
                     <TextInput
@@ -142,15 +142,17 @@ export default function VerifyOtpScreen() {
               activeOpacity={0.9}
             >
               <LinearGradient
-                colors={loading ? ["#D4D4D4", "#B8B8B8"] : ["#C9A862", "#A68B4D"]}
+                colors={
+                  loading ? ["#D4D4D4", "#B8B8B8"] : ["#C9A862", "#A68B4D"]
+                }
                 style={styles.submitGradient}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
               >
-                <Ionicons 
-                  name="checkmark-circle-outline" 
-                  size={18} 
-                  color="#FFFFFF" 
+                <Ionicons
+                  name="checkmark-circle-outline"
+                  size={18}
+                  color="#FFFFFF"
                   style={styles.buttonIcon}
                 />
                 <Text style={styles.submitButtonText}>
@@ -175,17 +177,15 @@ export default function VerifyOtpScreen() {
           <View style={styles.infoBox}>
             <Ionicons name="time-outline" size={20} color="#C9A862" />
             <Text style={styles.infoText}>
-              Mã OTP có hiệu lực trong 10 phút. Vui lòng kiểm tra email và nhập chính xác.
+              Mã OTP có hiệu lực trong 10 phút. Vui lòng kiểm tra email và nhập
+              chính xác.
             </Text>
           </View>
 
           {/* RESEND LINK */}
           <View style={styles.resendContainer}>
             <Text style={styles.resendText}>Không nhận được mã? </Text>
-            <TouchableOpacity
-              disabled={loading}
-              activeOpacity={0.7}
-            >
+            <TouchableOpacity disabled={loading} activeOpacity={0.7}>
               <Text style={styles.resendLink}>Gửi lại</Text>
             </TouchableOpacity>
           </View>
@@ -196,15 +196,15 @@ export default function VerifyOtpScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { 
+  container: {
     flex: 1,
   },
   gradient: {
     flex: 1,
   },
-  content: { 
-    flex: 1, 
-    justifyContent: "center", 
+  content: {
+    flex: 1,
+    justifyContent: "center",
     paddingHorizontal: 28,
   },
 
@@ -222,7 +222,7 @@ const styles = StyleSheet.create({
     borderRadius: 45,
     justifyContent: "center",
     alignItems: "center",
-    
+
     shadowColor: "#C9A862",
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.4,
@@ -242,17 +242,17 @@ const styles = StyleSheet.create({
     backgroundColor: "#C9A862",
     marginBottom: 24,
   },
-  title: { 
-    fontSize: 28, 
-    fontWeight: "700", 
-    color: "#1A1A1A", 
+  title: {
+    fontSize: 28,
+    fontWeight: "700",
+    color: "#1A1A1A",
     marginBottom: 8,
     letterSpacing: 0.5,
   },
-  subtitle: { 
-    fontSize: 14, 
-    color: "#666", 
-    textAlign: "center", 
+  subtitle: {
+    fontSize: 14,
+    color: "#666",
+    textAlign: "center",
     lineHeight: 22,
   },
   emailText: {
@@ -266,10 +266,10 @@ const styles = StyleSheet.create({
   form: {
     width: "100%",
   },
-  inputContainer: { 
+  inputContainer: {
     marginBottom: 24,
   },
-  label: { 
+  label: {
     fontSize: 11,
     fontWeight: "700",
     color: "#C9A862",
@@ -284,7 +284,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     borderWidth: 1.5,
     borderColor: "#E8E8E8",
-    
+
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
@@ -304,13 +304,13 @@ const styles = StyleSheet.create({
     textAlign: "center",
     letterSpacing: 8,
   },
-  inputError: { 
+  inputError: {
     borderColor: "#EF4444",
   },
-  errorText: { 
-    color: "#EF4444", 
-    fontSize: 12, 
-    marginTop: 6, 
+  errorText: {
+    color: "#EF4444",
+    fontSize: 12,
+    marginTop: 6,
     textAlign: "center",
     fontWeight: "500",
   },
@@ -319,7 +319,7 @@ const styles = StyleSheet.create({
   submitButton: {
     borderRadius: 14,
     overflow: "hidden",
-    
+
     shadowColor: "#C9A862",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
@@ -335,9 +335,9 @@ const styles = StyleSheet.create({
   buttonIcon: {
     marginRight: 8,
   },
-  submitButtonText: { 
-    color: "#FFFFFF", 
-    fontSize: 15, 
+  submitButtonText: {
+    color: "#FFFFFF",
+    fontSize: 15,
     fontWeight: "700",
     letterSpacing: 1.5,
   },

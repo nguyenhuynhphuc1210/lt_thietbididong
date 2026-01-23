@@ -1,4 +1,4 @@
-import { resetPassword } from "@/hooks/useAuth";
+import { useAuth } from "@/contexts/AuthContext";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router, useLocalSearchParams } from "expo-router";
@@ -16,6 +16,7 @@ import {
 import Toast from "react-native-toast-message";
 
 export default function ResetPasswordScreen() {
+  const { resetPassword } = useAuth();
   const { email } = useLocalSearchParams<{ email: string }>();
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -79,10 +80,7 @@ export default function ResetPasswordScreen() {
       style={styles.container}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
-      <LinearGradient
-        colors={["#F5F5F0", "#FFFFFF"]}
-        style={styles.gradient}
-      >
+      <LinearGradient colors={["#F5F5F0", "#FFFFFF"]} style={styles.gradient}>
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
@@ -104,7 +102,7 @@ export default function ResetPasswordScreen() {
 
               <Text style={styles.brandName}>LUXURY WATCH</Text>
               <View style={styles.brandLine} />
-              
+
               <Text style={styles.title}>Đặt Lại Mật Khẩu</Text>
               <Text style={styles.subtitle}>
                 Tạo mật khẩu mới cho tài khoản của bạn
@@ -117,10 +115,10 @@ export default function ResetPasswordScreen() {
               <View style={styles.inputContainer}>
                 <Text style={styles.label}>MẬT KHẨU MỚI</Text>
                 <View style={styles.inputWrapper}>
-                  <Ionicons 
-                    name="lock-closed-outline" 
-                    size={20} 
-                    color="#999" 
+                  <Ionicons
+                    name="lock-closed-outline"
+                    size={20}
+                    color="#999"
                     style={styles.inputIcon}
                   />
                   <TextInput
@@ -149,10 +147,10 @@ export default function ResetPasswordScreen() {
               <View style={styles.inputContainer}>
                 <Text style={styles.label}>XÁC NHẬN MẬT KHẨU</Text>
                 <View style={styles.inputWrapper}>
-                  <Ionicons 
-                    name="checkmark-circle-outline" 
-                    size={20} 
-                    color="#999" 
+                  <Ionicons
+                    name="checkmark-circle-outline"
+                    size={20}
+                    color="#999"
                     style={styles.inputIcon}
                   />
                   <TextInput
@@ -181,28 +179,47 @@ export default function ResetPasswordScreen() {
               <View style={styles.requirementsBox}>
                 <Text style={styles.requirementsTitle}>Yêu cầu mật khẩu:</Text>
                 <View style={styles.requirementRow}>
-                  <Ionicons 
-                    name={password.length >= 6 ? "checkmark-circle" : "ellipse-outline"} 
-                    size={16} 
-                    color={password.length >= 6 ? "#10B981" : "#999"} 
+                  <Ionicons
+                    name={
+                      password.length >= 6
+                        ? "checkmark-circle"
+                        : "ellipse-outline"
+                    }
+                    size={16}
+                    color={password.length >= 6 ? "#10B981" : "#999"}
                   />
-                  <Text style={[
-                    styles.requirementText,
-                    password.length >= 6 && styles.requirementMet
-                  ]}>
+                  <Text
+                    style={[
+                      styles.requirementText,
+                      password.length >= 6 && styles.requirementMet,
+                    ]}
+                  >
                     Tối thiểu 6 ký tự
                   </Text>
                 </View>
                 <View style={styles.requirementRow}>
-                  <Ionicons 
-                    name={password && confirm && password === confirm ? "checkmark-circle" : "ellipse-outline"} 
-                    size={16} 
-                    color={password && confirm && password === confirm ? "#10B981" : "#999"} 
+                  <Ionicons
+                    name={
+                      password && confirm && password === confirm
+                        ? "checkmark-circle"
+                        : "ellipse-outline"
+                    }
+                    size={16}
+                    color={
+                      password && confirm && password === confirm
+                        ? "#10B981"
+                        : "#999"
+                    }
                   />
-                  <Text style={[
-                    styles.requirementText,
-                    password && confirm && password === confirm && styles.requirementMet
-                  ]}>
+                  <Text
+                    style={[
+                      styles.requirementText,
+                      password &&
+                        confirm &&
+                        password === confirm &&
+                        styles.requirementMet,
+                    ]}
+                  >
                     Mật khẩu khớp nhau
                   </Text>
                 </View>
@@ -216,15 +233,17 @@ export default function ResetPasswordScreen() {
                 activeOpacity={0.9}
               >
                 <LinearGradient
-                  colors={loading ? ["#D4D4D4", "#B8B8B8"] : ["#C9A862", "#A68B4D"]}
+                  colors={
+                    loading ? ["#D4D4D4", "#B8B8B8"] : ["#C9A862", "#A68B4D"]
+                  }
                   style={styles.submitGradient}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                 >
-                  <Ionicons 
-                    name="shield-checkmark-outline" 
-                    size={18} 
-                    color="#FFFFFF" 
+                  <Ionicons
+                    name="shield-checkmark-outline"
+                    size={18}
+                    color="#FFFFFF"
                     style={styles.buttonIcon}
                   />
                   <Text style={styles.submitButtonText}>
@@ -247,9 +266,14 @@ export default function ResetPasswordScreen() {
 
             {/* INFO BOX */}
             <View style={styles.infoBox}>
-              <Ionicons name="information-circle-outline" size={20} color="#C9A862" />
+              <Ionicons
+                name="information-circle-outline"
+                size={20}
+                color="#C9A862"
+              />
               <Text style={styles.infoText}>
-                Sau khi đặt lại mật khẩu, bạn sẽ được chuyển đến trang đăng nhập để sử dụng mật khẩu mới.
+                Sau khi đặt lại mật khẩu, bạn sẽ được chuyển đến trang đăng nhập
+                để sử dụng mật khẩu mới.
               </Text>
             </View>
           </View>
@@ -260,7 +284,7 @@ export default function ResetPasswordScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { 
+  container: {
     flex: 1,
   },
   gradient: {
@@ -269,9 +293,9 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
   },
-  content: { 
-    flex: 1, 
-    justifyContent: "center", 
+  content: {
+    flex: 1,
+    justifyContent: "center",
     paddingHorizontal: 28,
     paddingVertical: 40,
   },
@@ -290,7 +314,7 @@ const styles = StyleSheet.create({
     borderRadius: 45,
     justifyContent: "center",
     alignItems: "center",
-    
+
     shadowColor: "#C9A862",
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.4,
@@ -310,9 +334,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#C9A862",
     marginBottom: 24,
   },
-  title: { 
-    fontSize: 28, 
-    fontWeight: "700", 
+  title: {
+    fontSize: 28,
+    fontWeight: "700",
     color: "#1A1A1A",
     marginBottom: 8,
     letterSpacing: 0.5,
@@ -346,7 +370,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     borderWidth: 1.5,
     borderColor: "#E8E8E8",
-    
+
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
@@ -402,7 +426,7 @@ const styles = StyleSheet.create({
   submitButton: {
     borderRadius: 14,
     overflow: "hidden",
-    
+
     shadowColor: "#C9A862",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
@@ -418,9 +442,9 @@ const styles = StyleSheet.create({
   buttonIcon: {
     marginRight: 8,
   },
-  submitButtonText: { 
-    color: "#FFFFFF", 
-    fontSize: 15, 
+  submitButtonText: {
+    color: "#FFFFFF",
+    fontSize: 15,
     fontWeight: "700",
     letterSpacing: 1.5,
   },

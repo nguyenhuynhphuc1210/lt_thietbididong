@@ -1,0 +1,10 @@
+const ORDER_STATUS_COLOR: Record<string, string> = {
+  PENDING: "#999999",
+  PAID: "#1E88E5",
+  CONFIRMED: "#6A1B9A",
+  SHIPPING: "#FB8C00",
+  COMPLETED: "#2E7D32",
+  CANCELLED: "#C62828",
+};
+
+export default ORDER_STATUS_COLOR;

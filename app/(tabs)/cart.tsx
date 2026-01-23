@@ -27,14 +27,15 @@ export default function CartScreen() {
     selectAll,
   } = useCart();
 
+  const router = useRouter();
+
   const [showRemoveModal, setShowRemoveModal] = useState(false);
   const [showClearModal, setShowClearModal] = useState(false);
   const [selectedProductId, setSelectedProductId] = useState<number | null>(
-    null
+    null,
   );
-  const router = useRouter();
 
-  // ===== SELECT ALL LOGIC =====
+  /* ===== SELECT LOGIC ===== */
   const selectedCount = cart.filter((i) => i.selected).length;
   const allSelected = cart.length > 0 && selectedCount === cart.length;
   const hasSelected = selectedCount > 0;
@@ -49,7 +50,7 @@ export default function CartScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
-      {/* ===== CHỌN TẤT CẢ ===== */}
+      {/* ===== SELECT ALL ===== */}
       {cart.length > 0 && (
         <View style={styles.selectAllRow}>
           <TouchableOpacity
@@ -70,15 +71,15 @@ export default function CartScreen() {
         </View>
       )}
 
-      {/* ===== LIST ===== */}
+      {/* ===== CART LIST ===== */}
       <FlatList
         data={cart}
         keyExtractor={(item) => item.productId.toString()}
+        contentContainerStyle={{ paddingBottom: 160 }}
         ListEmptyComponent={<Text style={styles.empty}>🛒 Giỏ hàng trống</Text>}
-        contentContainerStyle={{ paddingBottom: 150 }}
         renderItem={({ item }) => (
           <View style={styles.item}>
-            {/* CHECKBOX ITEM */}
+            {/* CHECKBOX */}
             <TouchableOpacity
               onPress={() => toggleSelectItem(item.productId)}
               style={{ marginRight: 8 }}
@@ -98,6 +99,7 @@ export default function CartScreen() {
               </Text>
               <Text style={styles.price}>{item.price.toLocaleString()} ₫</Text>
 
+              {/* QUANTITY */}
               <View style={styles.qtyRow}>
                 <TouchableOpacity
                   style={styles.qtyBtn}
@@ -124,6 +126,7 @@ export default function CartScreen() {
               </View>
             </View>
 
+            {/* REMOVE */}
             <TouchableOpacity
               onPress={() => {
                 setSelectedProductId(item.productId);
@@ -148,13 +151,18 @@ export default function CartScreen() {
             disabled={!hasSelected}
             style={[styles.checkout, !hasSelected && { opacity: 0.5 }]}
             onPress={() => {
-              router.push("/payment");
+              const selectedItems = cart.filter((i) => i.selected);
+
+              router.push({
+                pathname: "/payment",
+                params: {
+                  items: JSON.stringify(selectedItems),
+                },
+              });
             }}
           >
             <LinearGradient
               colors={["#C9A862", "#A68B4D"]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
               style={styles.checkoutGradient}
             >
               <Text style={styles.checkoutText}>
@@ -169,7 +177,7 @@ export default function CartScreen() {
         </View>
       )}
 
-      {/* ===== MODAL XÓA 1 SP ===== */}
+      {/* ===== REMOVE ONE ===== */}
       <Modal transparent visible={showRemoveModal} animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>
@@ -186,9 +194,11 @@ export default function CartScreen() {
               <TouchableOpacity
                 style={styles.modalConfirm}
                 onPress={() => {
-                  if (selectedProductId) removeItem(selectedProductId);
-                  setShowRemoveModal(false);
+                  if (selectedProductId) {
+                    removeItem(selectedProductId);
+                  }
                   setSelectedProductId(null);
+                  setShowRemoveModal(false);
                 }}
               >
                 <Text style={{ color: "#fff" }}>Xóa</Text>
@@ -198,7 +208,7 @@ export default function CartScreen() {
         </View>
       </Modal>
 
-      {/* ===== MODAL CLEAR ===== */}
+      {/* ===== CLEAR ALL ===== */}
       <Modal transparent visible={showClearModal} animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>

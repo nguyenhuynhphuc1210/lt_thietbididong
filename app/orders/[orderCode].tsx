@@ -1,3 +1,5 @@
+import { ORDER_STATUS_LABEL } from "@/constants/orderStatus";
+import ORDER_STATUS_COLOR from "@/constants/orderStatusColor";
 import { cancelOrder, getOrderDetail } from "@/services/orderService";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -40,7 +42,16 @@ export default function OrderDetailScreen() {
         {/* TITLE */}
         <View style={{ flex: 1, alignItems: "center" }}>
           <Text style={styles.orderCode}>{order.orderCode}</Text>
-          <Text style={styles.status}>{order.status}</Text>
+          <View
+            style={[
+              styles.statusBadge,
+              { backgroundColor: ORDER_STATUS_COLOR[order.status] || "#999" },
+            ]}
+          >
+            <Text style={styles.statusBadgeText}>
+              {ORDER_STATUS_LABEL[order.status] || order.status}
+            </Text>
+          </View>
         </View>
 
         {/* placeholder để canh giữa */}
@@ -65,6 +76,21 @@ export default function OrderDetailScreen() {
               <Text style={styles.sub}>
                 {item.quantity} × {item.price.toLocaleString()} ₫
               </Text>
+
+              {/* ⭐ REVIEW BUTTON */}
+              {order.status === "COMPLETED" && (
+                <TouchableOpacity
+                  style={styles.reviewBtn}
+                  onPress={() =>
+                    router.push({
+                      pathname: "/review",
+                      params: { productId: item.productId },
+                    })
+                  }
+                >
+                  <Text style={styles.reviewText}>⭐ Đánh giá sản phẩm</Text>
+                </TouchableOpacity>
+              )}
             </View>
 
             <Text style={styles.productTotal}>
@@ -201,5 +227,31 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.25)",
     alignItems: "center",
     justifyContent: "center",
+  },
+  statusBadge: {
+    marginTop: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 999,
+  },
+
+  statusBadgeText: {
+    color: "#fff",
+    fontWeight: "700",
+    fontSize: 12,
+  },
+  reviewBtn: {
+    marginTop: 6,
+    alignSelf: "flex-start",
+    backgroundColor: "#facc15",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 999,
+  },
+
+  reviewText: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#92400e",
   },
 });

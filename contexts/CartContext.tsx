@@ -1,4 +1,4 @@
-import { getCurrentUser } from "@/hooks/useAuth";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   addToCart,
   clearCart,
@@ -24,7 +24,7 @@ export type CartItem = {
   productImage: string;
   price: number;
   quantity: number;
-  selected: boolean; // ⭐ tick chọn
+  selected: boolean;
 };
 
 type CartContextType = {
@@ -39,6 +39,7 @@ type CartContextType = {
   decreaseItem: (productId: number) => Promise<void>;
   removeItem: (productId: number) => Promise<void>;
   clear: () => Promise<void>;
+  clearSelected: () => Promise<void>;
   refresh: () => Promise<void>;
 };
 
@@ -47,34 +48,54 @@ const CartContext = createContext<CartContextType>({} as CartContextType);
 /* ================= PROVIDER ================= */
 
 export const CartProvider = ({ children }: { children: React.ReactNode }) => {
+  const { user } = useAuth();
+  const userId = user?.id ?? null;
+
   const [items, setItems] = useState<CartItem[]>([]);
-  const [userId, setUserId] = useState<number | null>(null);
   const syncing = useRef(false);
 
   /* ---------- helpers ---------- */
   const normalizeItems = (data: any[]): CartItem[] =>
     data.map((i) => ({
-      ...i,
+      productId: i.productId ?? i.id,
+      productName: i.productName ?? i.name,
+      productImage: i.productImage ?? i.image,
+      price: i.price,
+      quantity: i.quantity,
       selected: i.selected ?? true,
     }));
 
-  /* ---------- 1. load current user ---------- */
-  useEffect(() => {
-    const loadUser = async () => {
-      try {
-        const res = await getCurrentUser();
-        setUserId(res?.id ?? null);
-      } catch {
-        setUserId(null);
-      }
-    };
-    loadUser();
-  }, []);
-
-  /* ---------- 2. storage key theo user ---------- */
+  /* ---------- storage key ---------- */
   const storageKey = userId ? `cart_${userId}` : "cart_guest";
 
-  /* ---------- 3. refresh từ API ---------- */
+  /* ---------- load cart when user changes ---------- */
+  useEffect(() => {
+    const load = async () => {
+      const cache = await AsyncStorage.getItem(storageKey);
+
+      if (cache) {
+        setItems(normalizeItems(JSON.parse(cache)));
+      } else {
+        setItems([]);
+      }
+
+      if (userId) {
+        try {
+          const res = await getCart();
+          setItems(normalizeItems(res.data || []));
+        } catch {}
+      }
+    };
+
+    load();
+  }, [userId, storageKey]);
+
+  /* ---------- persist cache ---------- */
+  useEffect(() => {
+    AsyncStorage.setItem(storageKey, JSON.stringify(items));
+  }, [items, storageKey]);
+
+  /* ---------- refresh from API ---------- */
   const refresh = useCallback(async () => {
     if (!userId || syncing.current) return;
 
@@ -89,36 +110,37 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, [userId]);
 
-  /* ---------- 4. load cache khi user thay đổi ---------- */
-  useEffect(() => {
-    const load = async () => {
-      const cache = await AsyncStorage.getItem(storageKey);
-
-      if (cache) setItems(normalizeItems(JSON.parse(cache)));
-      else setItems([]);
-
-      if (userId) await refresh();
-    };
-
-    load();
-  }, [userId, storageKey, refresh]);
-
-  /* ---------- 5. persist cache ---------- */
-  useEffect(() => {
-    AsyncStorage.setItem(storageKey, JSON.stringify(items));
-  }, [items, storageKey]);
-
   /* ================= ACTIONS ================= */
 
   const addItem = async (productId: number, qty = 1) => {
-    setItems((prev) =>
-      prev.map((i) =>
-        i.productId === productId ? { ...i, quantity: i.quantity + qty } : i,
-      ),
-    );
+    setItems((prev) => {
+      const exist = prev.find((i) => i.productId === productId);
 
-    if (userId) await addToCart(productId, qty);
-    await refresh();
+      if (exist) {
+        return prev.map((i) =>
+          i.productId === productId ? { ...i, quantity: i.quantity + qty } : i,
+        );
+      }
+
+      return [
+        ...prev,
+        {
+          productId,
+          productName: "",
+          productImage: "",
+          price: 1,
+          quantity: qty,
+          selected: true,
+        },
+      ];
+    });
+
+    if (userId) {
+      try {
+        await addToCart(productId, qty);
+        await refresh();
+      } catch {}
+    }
   };
 
   const decreaseItem = async (productId: number) => {
@@ -130,19 +152,33 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
         .filter((i) => i.quantity > 0),
     );
 
-    if (userId) await decreaseFromCart(productId);
-    await refresh();
+    if (userId) {
+      try {
+        await decreaseFromCart(productId);
+      } catch {
+        await refresh();
+      }
+    }
   };
 
   const removeItem = async (productId: number) => {
     setItems((prev) => prev.filter((i) => i.productId !== productId));
-
     if (userId) await removeFromCart(productId);
   };
 
   const clear = async () => {
     setItems([]);
     if (userId) await clearCart();
+  };
+
+  const clearSelected = async () => {
+    const selectedIds = items.filter((i) => i.selected).map((i) => i.productId);
+
+    setItems((prev) => prev.filter((i) => !i.selected));
+
+    if (userId) {
+      await Promise.all(selectedIds.map((id) => removeFromCart(id)));
+    }
   };
 
   /* ---------- select ---------- */
@@ -181,6 +217,7 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
         decreaseItem,
         removeItem,
         clear,
+        clearSelected,
         refresh,
       }}
     >

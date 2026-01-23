@@ -1,8 +1,10 @@
 import { useCart } from "@/contexts/CartContext";
 import { checkout } from "@/services/checkoutService";
+import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
+  Linking,
   ScrollView,
   StyleSheet,
   Text,
@@ -12,16 +14,19 @@ import {
 } from "react-native";
 import Toast from "react-native-toast-message";
 
-type PaymentMethod = "COD" | "MOMO";
+type PaymentMethod = "COD" | "VNPAY";
 
 export default function PaymentScreen() {
   const router = useRouter();
-  const { items, totalSelected, clear } = useCart();
+  const { items, totalSelected, clearSelected } = useCart();
 
   const [address, setAddress] = useState("");
   const [note, setNote] = useState("");
   const [method, setMethod] = useState<PaymentMethod>("COD");
   const [loading, setLoading] = useState(false);
+
+  /** 👉 CHỈ LẤY ITEM ĐƯỢC CHỌN */
+  const selectedItems = useMemo(() => items.filter((i) => i.selected), [items]);
 
   const submit = async () => {
     if (!address.trim()) {
@@ -33,10 +38,11 @@ export default function PaymentScreen() {
       return;
     }
 
-    if (items.length === 0) {
+    if (selectedItems.length === 0) {
       Toast.show({
         type: "error",
-        text1: "Giỏ hàng trống",
+        text1: "Chưa chọn sản phẩm",
+        text2: "Vui lòng chọn ít nhất 1 sản phẩm",
       });
       return;
     }
@@ -48,7 +54,7 @@ export default function PaymentScreen() {
         shippingAddress: address,
         note,
         paymentMethod: method,
-        items: items.map((i) => ({
+        items: selectedItems.map((i) => ({
           productId: i.productId,
           quantity: i.quantity,
         })),
@@ -56,35 +62,34 @@ export default function PaymentScreen() {
 
       const res = await checkout(payload);
 
-      await clear();
+      /* ================= COD ================= */
+      if (method === "COD") {
+        clearSelected();
 
-      Toast.show({
-        type: "success",
-        text1: "Đặt hàng thành công 🎉",
-        text2: `Mã đơn: ${res.orderCode}`,
-      });
+        Toast.show({
+          type: "success",
+          text1: "Đặt hàng thành công 🎉",
+          text2: `Mã đơn: ${res.orderCode}`,
+        });
 
-      setTimeout(() => {
         router.replace({
           pathname: "/orders/[orderCode]",
           params: { orderCode: res.orderCode },
         });
-      }, 1200);
-    } catch (e: any) {
-      console.log("❌ CHECKOUT ERROR =", e);
-
-      if (e?.response) {
-        console.log("❌ STATUS =", e.response.status);
-        console.log("❌ DATA =", e.response.data);
+        return;
       }
 
+      /* ================= VNPAY ================= */
+      if (method === "VNPAY" && res.paymentUrl) {
+        await Linking.openURL(res.paymentUrl);
+        return;
+      }
+    } catch (e) {
+      console.log("❌ CHECKOUT ERROR =", e);
       Toast.show({
         type: "error",
         text1: "Thanh toán thất bại",
-        text2:
-          e?.response?.data?.message || e?.response?.status === 401
-            ? "Phiên đăng nhập đã hết hạn"
-            : "Vui lòng thử lại",
+        text2: "Vui lòng thử lại",
       });
     } finally {
       setLoading(false);
@@ -93,6 +98,14 @@ export default function PaymentScreen() {
 
   return (
     <ScrollView style={styles.container}>
+      {/* HEADER */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()}>
+          <Ionicons name="arrow-back" size={26} color="#000" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Thanh toán</Text>
+      </View>
+
       {/* ADDRESS */}
       <Text style={styles.label}>Địa chỉ giao hàng</Text>
       <TextInput
@@ -120,9 +133,9 @@ export default function PaymentScreen() {
         <Text>Thanh toán khi nhận hàng (COD)</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.radio} onPress={() => setMethod("MOMO")}>
-        <View style={[styles.dot, method === "MOMO" && styles.active]} />
-        <Text>Thanh toán MOMO</Text>
+      <TouchableOpacity style={styles.radio} onPress={() => setMethod("VNPAY")}>
+        <View style={[styles.dot, method === "VNPAY" && styles.active]} />
+        <Text>Thanh toán VNPAY</Text>
       </TouchableOpacity>
 
       {/* TOTAL */}
@@ -146,8 +159,21 @@ export default function PaymentScreen() {
   );
 }
 
+/* ================= STYLES ================= */
+
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 16, backgroundColor: "#fff" },
+
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    marginLeft: 12,
+  },
 
   label: { fontWeight: "600", marginTop: 16, marginBottom: 6 },
 
@@ -164,7 +190,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 10,
   },
-
   dot: {
     width: 18,
     height: 18,
@@ -173,7 +198,6 @@ const styles = StyleSheet.create({
     borderColor: "#999",
     marginRight: 10,
   },
-
   active: {
     backgroundColor: "#C9A862",
     borderColor: "#C9A862",
@@ -185,7 +209,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#f5f5f5",
     borderRadius: 12,
   },
-
   totalText: {
     fontSize: 18,
     fontWeight: "700",
@@ -198,7 +221,6 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     alignItems: "center",
   },
-
   btnText: {
     color: "#fff",
     fontWeight: "700",

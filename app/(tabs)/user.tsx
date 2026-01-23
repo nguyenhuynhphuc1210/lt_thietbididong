@@ -1,33 +1,21 @@
-import { logout } from "@/hooks/useAuth";
+import { useAuth } from "@/contexts/AuthContext";
 import { Ionicons } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useFocusEffect } from "@react-navigation/native";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import { Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 export default function UserScreen() {
-  const [fullName, setFullName] = useState<string>("Người dùng");
+  const { user, logout } = useAuth();
   const [showConfirm, setShowConfirm] = useState(false);
+
+  const fullName = user?.fullName || "Người dùng";
 
   const confirmLogout = async () => {
     await logout();
     setShowConfirm(false);
-    router.replace("/login");
+    router.replace("/(auth)/login");
   };
-
-  useFocusEffect(
-    useCallback(() => {
-      const loadUser = async () => {
-        const userStr = await AsyncStorage.getItem("user");
-        if (!userStr) return;
-        const data = JSON.parse(userStr);
-        setFullName(data.fullName || "Người dùng");
-      };
-      loadUser();
-    }, []),
-  );
 
   return (
     <View style={styles.container}>
@@ -39,6 +27,16 @@ export default function UserScreen() {
 
       {/* MENU */}
       <View style={styles.menu}>
+        <TouchableOpacity
+          style={styles.menuItem}
+          onPress={() => router.push("/orders")}
+        >
+          <View style={styles.iconCircle}>
+            <Ionicons name="receipt-outline" size={24} color="#C9A862" />
+          </View>
+          <Text style={styles.menuText}>Đơn hàng của tôi</Text>
+        </TouchableOpacity>
+
         <TouchableOpacity
           style={styles.menuItem}
           onPress={() => router.push("/account-setting")}
@@ -65,7 +63,7 @@ export default function UserScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* MODAL LOGOUT */}
+      {/* MODAL CONFIRM LOGOUT */}
       <Modal transparent visible={showConfirm} animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>

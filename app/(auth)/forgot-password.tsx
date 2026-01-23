@@ -1,4 +1,4 @@
-import { forgotPassword } from "@/hooks/useAuth";
+import { useAuth } from "@/contexts/AuthContext";
 import { Ionicons } from "@expo/vector-icons";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { LinearGradient } from "expo-linear-gradient";
@@ -30,6 +30,7 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>;
 
 export default function ForgotPasswordScreen() {
+  const { forgotPassword } = useAuth();
   const [loading, setLoading] = useState(false);
 
   const {
@@ -64,8 +65,7 @@ export default function ForgotPasswordScreen() {
         type: "error",
         text1: "Lỗi",
         text2:
-          err.response?.data?.message ||
-          "Không thể gửi OTP. Vui lòng thử lại.",
+          err.response?.data?.message || "Không thể gửi OTP. Vui lòng thử lại.",
       });
     } finally {
       setLoading(false);
@@ -77,10 +77,7 @@ export default function ForgotPasswordScreen() {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={styles.container}
     >
-      <LinearGradient
-        colors={["#F5F5F0", "#FFFFFF"]}
-        style={styles.gradient}
-      >
+      <LinearGradient colors={["#F5F5F0", "#FFFFFF"]} style={styles.gradient}>
         <View style={styles.content}>
           {/* LOGO & HEADER */}
           <View style={styles.header}>
@@ -98,7 +95,7 @@ export default function ForgotPasswordScreen() {
 
             <Text style={styles.brandName}>LUXURY WATCH</Text>
             <View style={styles.brandLine} />
-            
+
             <Text style={styles.title}>Quên Mật Khẩu</Text>
             <Text style={styles.subtitle}>
               Nhập email của bạn để nhận mã OTP{"\n"}
@@ -116,10 +113,10 @@ export default function ForgotPasswordScreen() {
                 name="email"
                 render={({ field: { onChange, onBlur, value } }) => (
                   <View style={styles.inputWrapper}>
-                    <Ionicons 
-                      name="mail-outline" 
-                      size={20} 
-                      color="#999" 
+                    <Ionicons
+                      name="mail-outline"
+                      size={20}
+                      color="#999"
                       style={styles.inputIcon}
                     />
                     <TextInput
@@ -149,15 +146,17 @@ export default function ForgotPasswordScreen() {
               activeOpacity={0.9}
             >
               <LinearGradient
-                colors={loading ? ["#D4D4D4", "#B8B8B8"] : ["#C9A862", "#A68B4D"]}
+                colors={
+                  loading ? ["#D4D4D4", "#B8B8B8"] : ["#C9A862", "#A68B4D"]
+                }
                 style={styles.submitGradient}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
               >
-                <Ionicons 
-                  name="send-outline" 
-                  size={18} 
-                  color="#FFFFFF" 
+                <Ionicons
+                  name="send-outline"
+                  size={18}
+                  color="#FFFFFF"
                   style={styles.buttonIcon}
                 />
                 <Text style={styles.submitButtonText}>
@@ -180,7 +179,11 @@ export default function ForgotPasswordScreen() {
 
           {/* INFO BOX */}
           <View style={styles.infoBox}>
-            <Ionicons name="information-circle-outline" size={20} color="#C9A862" />
+            <Ionicons
+              name="information-circle-outline"
+              size={20}
+              color="#C9A862"
+            />
             <Text style={styles.infoText}>
               Mã OTP sẽ được gửi đến email của bạn và có hiệu lực trong 10 phút
             </Text>
@@ -218,7 +221,7 @@ const styles = StyleSheet.create({
     borderRadius: 45,
     justifyContent: "center",
     alignItems: "center",
-    
+
     shadowColor: "#C9A862",
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.4,
@@ -274,7 +277,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     borderWidth: 1.5,
     borderColor: "#E8E8E8",
-    
+
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
@@ -307,7 +310,7 @@ const styles = StyleSheet.create({
   submitButton: {
     borderRadius: 14,
     overflow: "hidden",
-    
+
     shadowColor: "#C9A862",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,

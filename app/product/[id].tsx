@@ -1,6 +1,7 @@
 import api from "@/constants/api";
 import { useCart } from "@/contexts/CartContext";
 import { useWishlist } from "@/contexts/WishlistContext";
+import { getReviewsByProduct } from "@/services/reviewService";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router, useLocalSearchParams } from "expo-router";
@@ -38,6 +39,7 @@ export default function ProductDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { addItem } = useCart();
   const { isWishlisted, toggleWishlist } = useWishlist();
+  const [reviews, setReviews] = useState<any[]>([]);
 
   const [product, setProduct] = useState<ProductDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -61,6 +63,15 @@ export default function ProductDetailScreen() {
     };
 
     fetchProduct();
+  }, [id]);
+
+  useEffect(() => {
+    // load reviews 👈 Ở ĐÂY
+    if (!id) return;
+
+    getReviewsByProduct(Number(id))
+      .then((res) => setReviews(res.data))
+      .catch(() => setReviews([]));
   }, [id]);
 
   const handleAddToCart = async () => {
@@ -232,6 +243,58 @@ export default function ProductDetailScreen() {
                   "• Chất liệu: Thép không gỉ cao cấp\n• Kháng nước: 5ATM\n• Bảo hành: 12 tháng chính hãng"}
               </Text>
             </View>
+          </View>
+
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Ionicons name="star-outline" size={20} color="#C9A862" />
+              <Text style={styles.sectionTitle}>Đánh giá khách hàng</Text>
+            </View>
+
+            {reviews.length === 0 ? (
+              <Text style={styles.noReviewText}>
+                Chưa có đánh giá nào cho sản phẩm này
+              </Text>
+            ) : (
+              reviews.map((r) => (
+                <View key={r.id} style={styles.reviewItem}>
+                  <View style={styles.reviewHeader}>
+                    <Text style={styles.reviewUser}>{r.userName}</Text>
+
+                    <View style={styles.reviewStars}>
+                      {[1, 2, 3, 4, 5].map((i) => (
+                        <Ionicons
+                          key={i}
+                          name={i <= r.rating ? "star" : "star-outline"}
+                          size={14}
+                          color="#facc15"
+                        />
+                      ))}
+                    </View>
+                  </View>
+
+                  <Text style={styles.reviewComment}>{r.comment}</Text>
+
+                  <Text style={styles.reviewDate}>
+                    {new Date(r.createdAt).toLocaleDateString("vi-VN")}
+                  </Text>
+                </View>
+              ))
+            )}
+
+            {/* WRITE REVIEW BUTTON */}
+            <TouchableOpacity
+              style={styles.reviewBtn}
+              onPress={() =>
+                router.push({
+                  pathname: "/review",
+                  params: { productId: product.id },
+                })
+              }
+            >
+              <Ionicons name="create-outline" size={16} color="#C9A862" />
+              <Text style={styles.reviewBtnText}>Viết đánh giá</Text>
+            </TouchableOpacity>
           </View>
 
           {/* FEATURES */}
@@ -642,5 +705,67 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     color: "#FFFFFF",
     letterSpacing: 1.5,
+  },
+  /* REVIEW */
+  reviewItem: {
+    backgroundColor: "#FFFFFF",
+    padding: 14,
+    borderRadius: 12,
+    marginBottom: 12,
+
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+
+  reviewHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 6,
+  },
+
+  reviewUser: {
+    fontWeight: "700",
+    color: "#111",
+  },
+
+  reviewStars: {
+    flexDirection: "row",
+  },
+
+  reviewComment: {
+    color: "#444",
+    lineHeight: 22,
+  },
+
+  reviewDate: {
+    marginTop: 6,
+    fontSize: 12,
+    color: "#888",
+  },
+
+  noReviewText: {
+    color: "#666",
+    fontStyle: "italic",
+  },
+
+  reviewBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 12,
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#C9A862",
+  },
+
+  reviewBtnText: {
+    marginLeft: 6,
+    fontWeight: "700",
+    color: "#C9A862",
   },
 });

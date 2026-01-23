@@ -1,4 +1,4 @@
-import { login } from "@/hooks/useAuth";
+import { useAuth } from "@/contexts/AuthContext";
 import { router } from "expo-router";
 import { useState } from "react";
 import {
@@ -32,6 +32,7 @@ const loginSchema = z.object({
 type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function LoginScreen() {
+  const { login } = useAuth();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 

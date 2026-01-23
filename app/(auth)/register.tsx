@@ -1,4 +1,4 @@
-import { register } from "@/hooks/useAuth";
+import { useAuth } from "@/contexts/AuthContext";
 import { Ionicons } from "@expo/vector-icons";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { LinearGradient } from "expo-linear-gradient";
@@ -21,29 +21,22 @@ import { z } from "zod";
 
 // ================= SCHEMA VALIDATION =================
 const registerSchema = z.object({
-  email: z
-    .string()
-    .trim()
-    .email("Email không đúng định dạng"),
-  password: z
-    .string()
-    .min(6, "Mật khẩu phải có ít nhất 6 ký tự"),
-  fullName: z
-    .string()
-    .trim()
-    .min(1, "Vui lòng nhập họ và tên"),
+  email: z.string().trim().email("Email không đúng định dạng"),
+  password: z.string().min(6, "Mật khẩu phải có ít nhất 6 ký tự"),
+  fullName: z.string().trim().min(1, "Vui lòng nhập họ và tên"),
   phone: z
     .string()
     .trim()
     .regex(
       /^(0|84)[3|5|7|8|9][0-9]{8}$/,
-      "Số điện thoại Việt Nam không hợp lệ"
+      "Số điện thoại Việt Nam không hợp lệ",
     ),
 });
 
 type RegisterFormData = z.infer<typeof registerSchema>;
 
 export default function RegisterScreen() {
+  const { register } = useAuth();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -83,8 +76,7 @@ export default function RegisterScreen() {
     } catch (err: any) {
       setLoading(false);
 
-      const errorMsg =
-        err.response?.data?.message || "Đăng ký thất bại";
+      const errorMsg = err.response?.data?.message || "Đăng ký thất bại";
 
       Toast.show({
         type: "error",
@@ -99,10 +91,7 @@ export default function RegisterScreen() {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={styles.container}
     >
-      <LinearGradient
-        colors={["#F5F5F0", "#FFFFFF"]}
-        style={styles.gradient}
-      >
+      <LinearGradient colors={["#F5F5F0", "#FFFFFF"]} style={styles.gradient}>
         <ScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
@@ -124,7 +113,7 @@ export default function RegisterScreen() {
 
               <Text style={styles.brandName}>LUXURY WATCH</Text>
               <View style={styles.brandLine} />
-              
+
               <Text style={styles.title}>Tạo Tài Khoản</Text>
               <Text style={styles.subtitle}>
                 Tham gia cùng chúng tôi để khám phá thế giới đồng hồ cao cấp
@@ -141,14 +130,17 @@ export default function RegisterScreen() {
                   name="email"
                   render={({ field: { onChange, onBlur, value } }) => (
                     <View style={styles.inputWrapper}>
-                      <Ionicons 
-                        name="mail-outline" 
-                        size={20} 
-                        color="#999" 
+                      <Ionicons
+                        name="mail-outline"
+                        size={20}
+                        color="#999"
                         style={styles.inputIcon}
                       />
                       <TextInput
-                        style={[styles.input, errors.email && styles.inputError]}
+                        style={[
+                          styles.input,
+                          errors.email && styles.inputError,
+                        ]}
                         placeholder="your@email.com"
                         placeholderTextColor="#B0B0B0"
                         onBlur={onBlur}
@@ -174,14 +166,17 @@ export default function RegisterScreen() {
                   name="password"
                   render={({ field: { onChange, onBlur, value } }) => (
                     <View style={styles.inputWrapper}>
-                      <Ionicons 
-                        name="lock-closed-outline" 
-                        size={20} 
-                        color="#999" 
+                      <Ionicons
+                        name="lock-closed-outline"
+                        size={20}
+                        color="#999"
                         style={styles.inputIcon}
                       />
                       <TextInput
-                        style={[styles.input, errors.password && styles.inputError]}
+                        style={[
+                          styles.input,
+                          errors.password && styles.inputError,
+                        ]}
                         placeholder="Tối thiểu 6 ký tự"
                         placeholderTextColor="#B0B0B0"
                         secureTextEntry={!showPassword}
@@ -195,7 +190,9 @@ export default function RegisterScreen() {
                         style={styles.eyeIcon}
                       >
                         <Ionicons
-                          name={showPassword ? "eye-outline" : "eye-off-outline"}
+                          name={
+                            showPassword ? "eye-outline" : "eye-off-outline"
+                          }
                           size={20}
                           color="#999"
                         />
@@ -204,7 +201,9 @@ export default function RegisterScreen() {
                   )}
                 />
                 {errors.password && (
-                  <Text style={styles.errorText}>{errors.password.message}</Text>
+                  <Text style={styles.errorText}>
+                    {errors.password.message}
+                  </Text>
                 )}
               </View>
 
@@ -216,14 +215,17 @@ export default function RegisterScreen() {
                   name="fullName"
                   render={({ field: { onChange, onBlur, value } }) => (
                     <View style={styles.inputWrapper}>
-                      <Ionicons 
-                        name="person-outline" 
-                        size={20} 
-                        color="#999" 
+                      <Ionicons
+                        name="person-outline"
+                        size={20}
+                        color="#999"
                         style={styles.inputIcon}
                       />
                       <TextInput
-                        style={[styles.input, errors.fullName && styles.inputError]}
+                        style={[
+                          styles.input,
+                          errors.fullName && styles.inputError,
+                        ]}
                         placeholder="Nguyễn Văn A"
                         placeholderTextColor="#B0B0B0"
                         onBlur={onBlur}
@@ -249,14 +251,17 @@ export default function RegisterScreen() {
                   name="phone"
                   render={({ field: { onChange, onBlur, value } }) => (
                     <View style={styles.inputWrapper}>
-                      <Ionicons 
-                        name="call-outline" 
-                        size={20} 
-                        color="#999" 
+                      <Ionicons
+                        name="call-outline"
+                        size={20}
+                        color="#999"
                         style={styles.inputIcon}
                       />
                       <TextInput
-                        style={[styles.input, errors.phone && styles.inputError]}
+                        style={[
+                          styles.input,
+                          errors.phone && styles.inputError,
+                        ]}
                         placeholder="0987654321"
                         placeholderTextColor="#B0B0B0"
                         keyboardType="phone-pad"
@@ -281,7 +286,9 @@ export default function RegisterScreen() {
                 activeOpacity={0.9}
               >
                 <LinearGradient
-                  colors={loading ? ["#D4D4D4", "#B8B8B8"] : ["#C9A862", "#A68B4D"]}
+                  colors={
+                    loading ? ["#D4D4D4", "#B8B8B8"] : ["#C9A862", "#A68B4D"]
+                  }
                   style={styles.registerGradient}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
@@ -343,7 +350,7 @@ const styles = StyleSheet.create({
     borderRadius: 45,
     justifyContent: "center",
     alignItems: "center",
-    
+
     shadowColor: "#C9A862",
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.4,
@@ -399,7 +406,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     borderWidth: 1.5,
     borderColor: "#E8E8E8",
-    
+
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
@@ -436,7 +443,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     overflow: "hidden",
     marginTop: 8,
-    
+
     shadowColor: "#C9A862",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,

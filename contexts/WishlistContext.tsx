@@ -1,73 +1,73 @@
-import { getCurrentUser } from "@/hooks/useAuth";
+import { useAuth } from "@/contexts/AuthContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 
 interface WishlistContextType {
   wishlist: number[];
   isWishlisted: (id: number) => boolean;
   toggleWishlist: (id: number) => Promise<void>;
+  clearWishlist: () => void;
 }
 
 const WishlistContext = createContext<WishlistContextType>({
   wishlist: [],
   isWishlisted: () => false,
   toggleWishlist: async () => {},
+  clearWishlist: () => {},
 });
 
-export const WishlistProvider = ({ children }: any) => {
+export const WishlistProvider = ({
+  children,
+}: {
+  children: React.ReactNode;
+}) => {
+  const { user } = useAuth();
+  const userId = user?.id ?? null;
+
   const [wishlist, setWishlist] = useState<number[]>([]);
-  const [userId, setUserId] = useState<number | null>(null);
 
-  /* ⭐ TỰ ĐỒNG BỘ KHI ĐỔI USER */
+  /* ⭐ SYNC THEO USER */
   useEffect(() => {
-    const loadUserAndWishlist = async () => {
-      const data = await getCurrentUser();
-
-      const newUserId = data?.id ?? null;
-
-      // nếu đổi user → reset & load lại
-      if (newUserId !== userId) {
-        setUserId(newUserId);
-
-        if (!newUserId) {
-          setWishlist([]);
-          return;
-        }
-
-        const key = `wishlist_${newUserId}`;
-        const saved = await AsyncStorage.getItem(key);
-
-        setWishlist(saved ? JSON.parse(saved) : []);
+    const loadWishlist = async () => {
+      if (!userId) {
+        setWishlist([]);
+        return;
       }
+
+      const key = `wishlist_${userId}`;
+      const saved = await AsyncStorage.getItem(key);
+
+      setWishlist(saved ? JSON.parse(saved) : []);
     };
 
-    // chạy lần đầu + mỗi 1s kiểm tra tài khoản thay đổi
-    const interval = setInterval(loadUserAndWishlist, 1000);
-
-    return () => clearInterval(interval);
+    loadWishlist();
   }, [userId]);
 
-  const isWishlisted = (id: number) => wishlist.includes(id);
+  const isWishlisted = (productId: number) => {
+    return wishlist.includes(productId);
+  };
 
   const toggleWishlist = async (productId: number) => {
     if (!userId) return;
 
-    let newList: number[];
+    const newWishlist = wishlist.includes(productId)
+      ? wishlist.filter((id) => id !== productId)
+      : [...wishlist, productId];
 
-    if (wishlist.includes(productId)) {
-      newList = wishlist.filter((x) => x !== productId);
-    } else {
-      newList = [...wishlist, productId];
-    }
+    setWishlist(newWishlist);
+    await AsyncStorage.setItem(
+      `wishlist_${userId}`,
+      JSON.stringify(newWishlist),
+    );
+  };
 
-    setWishlist(newList);
-
-    await AsyncStorage.setItem(`wishlist_${userId}`, JSON.stringify(newList));
+  const clearWishlist = () => {
+    setWishlist([]);
   };
 
   return (
     <WishlistContext.Provider
-      value={{ wishlist, isWishlisted, toggleWishlist }}
+      value={{ wishlist, isWishlisted, toggleWishlist, clearWishlist }}
     >
       {children}
     </WishlistContext.Provider>

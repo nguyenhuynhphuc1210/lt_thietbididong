@@ -1,23 +1,12 @@
-import { getCurrentUser } from "@/hooks/useAuth";
-import { useFocusEffect } from "@react-navigation/native";
+import { useAuth } from "@/contexts/AuthContext";
 import { LinearGradient } from "expo-linear-gradient";
-import React, { useCallback, useState } from "react";
+import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 
 export default function AppHeader() {
-  const [fullName, setFullName] = useState<string>("");
+  const { user } = useAuth();
 
-  const loadUser = async () => {
-    const data = await getCurrentUser();
-    if (data?.fullName) setFullName(data.fullName);
-    else setFullName("");
-  };
-
-  useFocusEffect(
-    useCallback(() => {
-      loadUser();
-    }, []),
-  );
+  const fullName = user?.fullName ?? "";
 
   const getTimeGreeting = () => {
     const hour = new Date().getHours();
@@ -26,21 +15,23 @@ export default function AppHeader() {
     return "Chào buổi tối";
   };
 
+  const avatarChar = fullName ? fullName.charAt(0).toUpperCase() : "K";
+
   return (
     <View style={styles.container}>
       <View style={styles.headerContent}>
         <View style={styles.userInfo}>
+          {/* AVATAR */}
           <LinearGradient
-            colors={["#FFD700", "#C9A862"]} // gradient avatar vàng nổi bật
+            colors={["#FFD700", "#C9A862"]}
             style={styles.avatarGradient}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
           >
-            <Text style={styles.avatarText}>
-              {fullName ? fullName.charAt(0).toUpperCase() : "K"}
-            </Text>
+            <Text style={styles.avatarText}>{avatarChar}</Text>
           </LinearGradient>
 
+          {/* TEXT */}
           <View style={styles.textContainer}>
             <Text style={styles.greeting}>{getTimeGreeting()} 👋</Text>
             <Text style={styles.name} numberOfLines={1}>
@@ -49,11 +40,12 @@ export default function AppHeader() {
           </View>
         </View>
 
-        <View style={styles.rightActions}></View>
+        <View style={styles.rightActions} />
       </View>
 
+      {/* DECORATIVE LINE */}
       <LinearGradient
-        colors={["#FFD700", "#C9A862"]} // decorative line vàng
+        colors={["#FFD700", "#C9A862"]}
         style={styles.decorativeLine}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 0 }}
